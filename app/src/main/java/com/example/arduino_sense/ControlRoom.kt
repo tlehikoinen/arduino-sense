@@ -26,6 +26,7 @@ class ControlRoom: AppCompatActivity() {
         initDisconnectButton()
         inittempButton()
         initAutoButton()
+        //
 
     }
     private fun switchLED(bleController: BLEController?, on: Boolean) {
