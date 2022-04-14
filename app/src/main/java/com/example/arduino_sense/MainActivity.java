@@ -22,7 +22,7 @@ public class MainActivity extends AppCompatActivity implements BLEControllerList
     private TextView logView;
     private Button connectButton;
     private Button disconnectButton;
-    private Button switchLEDButton;
+    private Button openControlRoom;
     private BLEController bleController;
     public String deviceAddress;
 
@@ -65,8 +65,8 @@ public class MainActivity extends AppCompatActivity implements BLEControllerList
     }
 
     private void initSwitchLEDButton() {
-        switchLEDButton = findViewById(R.id.switchButton);
-        switchLEDButton.setOnClickListener(v -> {
+        openControlRoom = findViewById(R.id.switchButton);
+        openControlRoom.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ControlRoom.class);
             startActivity(intent);
         });
@@ -76,7 +76,7 @@ public class MainActivity extends AppCompatActivity implements BLEControllerList
         runOnUiThread(() -> {
             connectButton.setEnabled(false);
             disconnectButton.setEnabled(false);
-            switchLEDButton.setEnabled(false);
+            openControlRoom.setEnabled(false);
         });
     }
 
@@ -163,7 +163,7 @@ public class MainActivity extends AppCompatActivity implements BLEControllerList
         runOnUiThread(() -> {
             disconnectButton.setEnabled(true);
             //toast("BLE Connected!");
-            switchLEDButton.setEnabled(true);
+            openControlRoom.setEnabled(true);
         });
     }
 
