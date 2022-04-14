@@ -93,7 +93,8 @@
                             android:id="@+id/seekBar3"
                             android:layout_width="match_parent"
                             android:layout_height="67dp"
-                            android:layout_weight="1" />
+                            android:layout_weight="1"
+                            android:max="5" />
 
                     </LinearLayout>
 
@@ -117,7 +118,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Button" />
+                        android:text="button" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -130,7 +131,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:text="Button" />
+                        android:text="@string/disconnect" />
 
                     <Button
                         android:id="@+id/button25"
@@ -148,17 +149,17 @@
 
                     <ImageButton
                         android:id="@+id/imageButton4"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="256dp"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
                         app:srcCompat="@drawable/lightsensor" />
 
                     <ImageButton
                         android:id="@+id/imageButton3"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
+                        android:layout_width="200dp"
+                        android:layout_height="160dp"
                         android:layout_weight="1"
-                        app:srcCompat="@drawable/lightsensor" />
+                        android:src="@drawable/img"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -187,3 +188,4 @@
     </ScrollView>
 
 </LinearLayout>
+
