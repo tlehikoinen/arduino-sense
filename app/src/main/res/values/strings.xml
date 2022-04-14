@@ -6,4 +6,8 @@
     <string name="off_button_string">Off</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="connect">Connect</string>
+    <string name="disconnect">Disconnect</string>
+    <string name="controlroom">ControlRoom</string>
+    <string name="log">Log</string>
 </resources>
