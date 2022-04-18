@@ -89,9 +89,9 @@ class ControlRoom: AppCompatActivity() {
         val ledoff = ByteArray(1)
         ledon[0] = 0x1
         if (!on) {
-            bleController!!.sendData(ledoff)
+            bleController!!.sendLEDData(ledoff)
         } else {
-            bleController!!.sendData(ledon)
+            bleController!!.sendLEDData(ledon)
         }
     }
 
