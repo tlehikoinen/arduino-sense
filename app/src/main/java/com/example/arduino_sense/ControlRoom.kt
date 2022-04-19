@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.example.arduino_sense.databinding.ActivityMainBinding
 import java.lang.Exception
+import java.util.concurrent.ConcurrentLinkedQueue
 
 // Arduino mode => send 0 for auto, 1 for user controlled
 enum class Mode { USER, AUTO }
@@ -64,7 +65,7 @@ class ControlRoom: AppCompatActivity() {
         mode = modes[littleEndianConversion(bleController!!.getMode())]
         modeButton.setText(mode.btn_text)
         Log.d("REAd", mode.toString())
-
+        speedBar.isEnabled = mode.mode === Mode.USER
     }
 
     private fun initButtons() {
@@ -134,6 +135,8 @@ class ControlRoom: AppCompatActivity() {
             fanSpeed = 0
             bleController!!.sendSpeed(byteArrayOf(fanSpeed.toByte()))
             modeButton.setText(mode.btn_text)
+            speedBar.progress = 0
+            speedBar.isEnabled = true
         }
     }
     private fun inittempButton() {
@@ -156,6 +159,7 @@ class ControlRoom: AppCompatActivity() {
                 mode = if (mode == modes[0]) modes[1] else modes[0]
                 bleController!!.sendMode(mode.to_arduino)
                 modeButton.setText(mode.btn_text)
+                speedBar.isEnabled = mode.mode === Mode.USER
 
             } catch (e: Exception){
                 toast("try again $e")

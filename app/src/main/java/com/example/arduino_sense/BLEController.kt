@@ -149,8 +149,25 @@ class BLEController private constructor(ctx: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            super.onCharacteristicWrite(gatt, characteristic, status)
-            Log.i("TAG", "Characteristic " + characteristic.uuid + " written")
+            with(characteristic) {
+                when (status) {
+                    BluetoothGatt.GATT_SUCCESS -> {
+                        Log.i("BluetoothGattCallback", "Wrote to characteristic $uuid | value: ${value.toString()}")
+                    }
+                    BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH -> {
+                        Log.e("BluetoothGattCallback", "Write exceeded connection ATT MTU!")
+                    }
+                    BluetoothGatt.GATT_WRITE_NOT_PERMITTED -> {
+                        Log.e("BluetoothGattCallback", "Write not permitted for $uuid!")
+                    }
+                    else -> {
+                        Log.e("BluetoothGattCallback", "Characteristic write failed for $uuid, error: $status")
+                    }
+                }
+            }
+
+//            super.onCharacteristicWrite(gatt, characteristic, status)
+//            Log.i("TAG", "Characteristic " + characteristic.uuid + " written")
         }
 
         @SuppressLint("MissingPermission")
@@ -159,21 +176,32 @@ class BLEController private constructor(ctx: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            super.onCharacteristicRead(gatt, characteristic, status)
+            when (status) {
+                BluetoothGatt.GATT_SUCCESS -> {
+                    if (characteristic == btGattCharTemp) {
+                        Log.d("REAd", "get temp")
 
-            Log.d("REAd", "Haloo")
-            if (characteristic == btGattCharTemp) {
-                Log.d("REAd", "get temp")
-
-                tempvalue = characteristic.value
-                btGattCharTemp!!.value = tempvalue
-                Log.i("REAd", tempvalue[0].toString())
-            }
-            if(characteristic==btGattCharMode){
-                Log.i("REAd", "get char mode")
-                modeValue = characteristic.value
-                btGattCharMode!!.value=modeValue
-                Log.i("REAd", modeValue[0].toString())
+                        tempvalue = characteristic.value
+                        btGattCharTemp!!.value = tempvalue
+                        Log.i("REAd", tempvalue[0].toString())
+                    }
+                    if(characteristic==btGattCharMode){
+                        Log.i("REAd", "get char mode")
+                        modeValue = characteristic.value
+                        btGattCharMode!!.value=modeValue
+                        Log.i("REAd", modeValue[0].toString())
+                    }
+                    Log.i("BluetoothGattCallback", "Readcharacteristic $characteristic")
+                }
+                BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH -> {
+                    Log.e("BluetoothGattCallback", "Read exceeded connection ATT MTU!")
+                }
+                BluetoothGatt.GATT_WRITE_NOT_PERMITTED -> {
+                    Log.e("BluetoothGattCallback", "Read not permitted for!")
+                }
+                else -> {
+                    Log.e("BluetoothGattCallback", "Characteristic read failed, error: $status")
+                }
             }
         }
         override fun onCharacteristicChanged(
@@ -183,17 +211,11 @@ class BLEController private constructor(ctx: Context) {
             super.onCharacteristicChanged(gatt, characteristic)
             if (characteristic == btGattCharSpeed) {
                 Log.d("REAd", "get speed")
-
                 speedValue = characteristic.value
-                //btGattCharTemp!!.value = tempvalue
                 Log.i("REAd", speedValue[0].toString())
-                Thread.sleep(200)
             }
         }
     }
-
-
-
 
 
     private fun fireDisconnected() {
