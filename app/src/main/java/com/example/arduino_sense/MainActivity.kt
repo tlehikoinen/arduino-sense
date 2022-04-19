@@ -24,7 +24,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private lateinit var disconnectButton: Button
     private lateinit var openControlRoom: Button
     private var bleController: BLEController? = null
-    private var deviceAddress: String? = null
+    private lateinit var deviceAddress: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         logView.movementMethod = ScrollingMovementMethod()
         initConnectButton()
         initDisconnectButton()
-        initControRoomButton()
+        initControlRoomButton()
         statusCheck()
         checkBLESupport()
         checkPermissions()
@@ -61,7 +61,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         }
     }
 
-    private fun initControRoomButton() {
+    private fun initControlRoomButton() {
         openControlRoom = findViewById(R.id.switchButton)
         openControlRoom.setOnClickListener {
             val intent = Intent(this@MainActivity, ControlRoom::class.java)
@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
             != PackageManager.PERMISSION_GRANTED
         ) {
             log("\"Access Fine Location\" permission not granted yet!")
-            log("Whitout this permission Blutooth devices cannot be searched!")
+            log("Without this permission Bluetooth devices cannot be searched!")
             ActivityCompat.requestPermissions(
                 this,
                 arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
@@ -114,11 +114,11 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
             .setCancelable(false)
             .setPositiveButton("Yes") {
-                    dialog: DialogInterface?, id: Int -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    _: DialogInterface?, _: Int -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             )
             }
             .setNegativeButton("No") {
-                    dialog: DialogInterface, id: Int -> dialog.cancel()
+                    dialog: DialogInterface, _: Int -> dialog.cancel()
             }
         val alert = builder.create()
         alert.show()
@@ -148,7 +148,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
 
     override fun onResume() {
         super.onResume()
-        deviceAddress = null
+        deviceAddress = ""
         bleController = BLEController.getInstance(this)
         bleController!!.addBLEControllerListener(this)
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
@@ -165,7 +165,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         bleController!!.removeBLEControllerListener(this)
     }
 
-    override fun BLEControllerConnected() {
+    override fun bleControllerConnected() {
         log("[BLE]\tConnected")
         runOnUiThread {
             disconnectButton.isEnabled = true
@@ -174,7 +174,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         }
     }
 
-    override fun BLEControllerDisconnected() {
+    override fun bleControllerDisconnected() {
         log("[BLE]\tDisconnected")
         disableButtons()
         runOnUiThread {
@@ -183,7 +183,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         }
     }
 
-    override fun BLEDeviceFound(name: String, address: String) {
+    override fun bleDeviceFound(name: String, address: String) {
         log("Device $name found with address $address")
         //Toast.makeText(this, "Device " + name + " found with address " + address, Toast.LENGTH_LONG).show();
         deviceAddress = address
