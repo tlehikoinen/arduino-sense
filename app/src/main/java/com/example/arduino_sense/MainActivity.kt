@@ -7,8 +7,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.provider.Settings
 import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -39,6 +41,24 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         checkBLESupport()
         checkPermissions()
         disableButtons()
+
+        restApiExamples()
+    }
+
+    private fun restApiExamples() {
+        // Logs with tag "jpk" different responses
+        val ds = DataService()
+        val us = UserService()
+        Log.d("jpk", "USER SERVICE")
+        us.getUsers()
+        us.createUser("user", "salasana")
+        us.loginUser("user", "salasana")
+
+        Log.d("jpk", "DATA SERVICE")
+        ds.fetchUserData("tommi")
+        ds.fetchAllData()
+        ds.postData("token", 10, 20)
+
     }
 
     private fun initConnectButton() {
