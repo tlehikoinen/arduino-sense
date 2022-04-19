@@ -3,6 +3,7 @@ package com.example.arduino_sense
 import android.content.Intent
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -40,12 +41,29 @@ class ControlRoom: AppCompatActivity() {
         bleController = BLEController.getInstance(this)
         initButtons()
         initSpeedBar()
+        initMode()
+
 
 //        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 //        binding.fanSpeed = fanSpeed
 //        binding.autoButton.setOnClickListener { toggleMode() }
 
         //
+
+    }
+
+    fun littleEndianConversion(bytes: ByteArray): Int {
+        var result = 0
+        for (i in bytes.indices) {
+            result = result or (bytes[i].toInt() shl 8 * i)
+        }
+        return result
+    }
+
+    private fun initMode() {
+        mode = modes[littleEndianConversion(bleController!!.getMode())]
+        modeButton.setText(mode.btn_text)
+        Log.d("REAd", mode.toString())
 
     }
 
@@ -124,7 +142,7 @@ class ControlRoom: AppCompatActivity() {
             try {
                 nickname=findViewById(R.id.nick_name)
                 nickname.setText(bleController!!.read())
-            }catch (e: Exception){
+            } catch (e: Exception){
                 toast("try again $e")
             }
         }

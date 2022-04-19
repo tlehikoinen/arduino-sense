@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         checkPermissions()
         disableButtons()
 
+        //bleController?.getMode()
         restApiExamples()
     }
 
@@ -53,6 +54,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         us.getUsers()
         us.createUser("user", "salasana")
         us.loginUser("user", "salasana")
+
 
         Log.d("jpk", "DATA SERVICE")
         ds.fetchUserData("tommi")
@@ -86,6 +88,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         openControlRoom.setOnClickListener {
             val intent = Intent(this@MainActivity, ControlRoom::class.java)
             startActivity(intent)
+            //bleController?.getMode()
         }
     }
 
