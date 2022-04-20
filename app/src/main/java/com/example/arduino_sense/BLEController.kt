@@ -8,13 +8,19 @@ import android.bluetooth.le.ScanResult
 import android.content.Context
 import android.util.Log
 import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+
 
 class BLEController private constructor(ctx: Context) {
     private var scanner: BluetoothLeScanner? = null
     private var device: BluetoothDevice? = null
     private var bluetoothGatt: BluetoothGatt? = null
+    private var descriptor: BluetoothGattDescriptor? = null
     private val bluetoothManager: BluetoothManager = ctx.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
     private lateinit var tempvalue: ByteArray
+    private lateinit var modeValue: ByteArray
+    private lateinit var speedValue: ByteArray
     private var btGattCharLed: BluetoothGattCharacteristic? = null
     private var btGattCharTemp: BluetoothGattCharacteristic? = null
     private var btGattCharHumidity: BluetoothGattCharacteristic? = null
@@ -114,6 +120,7 @@ class BLEController private constructor(ctx: Context) {
                         }
                         if (characteristic.uuid.toString().startsWith("00002ba3")) {
                             btGattCharMode = characteristic
+                            bluetoothGatt!!.readCharacteristic(btGattCharMode)
                         }
                         if (characteristic.uuid.toString().startsWith("00002a6e")) {
                             btGattCharTemp = characteristic
@@ -124,6 +131,12 @@ class BLEController private constructor(ctx: Context) {
                         }
                         if (characteristic.uuid.toString().startsWith("00002a67")) {
                             btGattCharSpeed = characteristic
+                            gatt.setCharacteristicNotification(btGattCharSpeed, true)
+                            descriptor = characteristic.getDescriptor(UUID
+                                .fromString("00002902-0000-1000-8000-00805f9b34fb"))
+                            descriptor!!.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                            bluetoothGatt!!.writeDescriptor(descriptor)
+
                         }
                         Log.i("[BLE]", "CONNECTED")
                     }
@@ -136,8 +149,25 @@ class BLEController private constructor(ctx: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            super.onCharacteristicWrite(gatt, characteristic, status)
-            Log.i("TAG", "Characteristic " + characteristic.uuid + " written")
+            with(characteristic) {
+                when (status) {
+                    BluetoothGatt.GATT_SUCCESS -> {
+                        Log.i("BluetoothGattCallback", "Wrote to characteristic $uuid | value: ${value.toString()}")
+                    }
+                    BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH -> {
+                        Log.e("BluetoothGattCallback", "Write exceeded connection ATT MTU!")
+                    }
+                    BluetoothGatt.GATT_WRITE_NOT_PERMITTED -> {
+                        Log.e("BluetoothGattCallback", "Write not permitted for $uuid!")
+                    }
+                    else -> {
+                        Log.e("BluetoothGattCallback", "Characteristic write failed for $uuid, error: $status")
+                    }
+                }
+            }
+
+//            super.onCharacteristicWrite(gatt, characteristic, status)
+//            Log.i("TAG", "Characteristic " + characteristic.uuid + " written")
         }
 
         @SuppressLint("MissingPermission")
@@ -146,13 +176,46 @@ class BLEController private constructor(ctx: Context) {
             characteristic: BluetoothGattCharacteristic,
             status: Int
         ) {
-            super.onCharacteristicRead(gatt, characteristic, status)
-            tempvalue = characteristic.value
-            btGattCharTemp!!.value = tempvalue
-            Log.i("REAd", tempvalue[0].toString())
+            when (status) {
+                BluetoothGatt.GATT_SUCCESS -> {
+                    if (characteristic == btGattCharTemp) {
+                        Log.d("REAd", "get temp")
+
+                        tempvalue = characteristic.value
+                        btGattCharTemp!!.value = tempvalue
+                        Log.i("REAd", tempvalue[0].toString())
+                    }
+                    if(characteristic==btGattCharMode){
+                        Log.i("REAd", "get char mode")
+                        modeValue = characteristic.value
+                        btGattCharMode!!.value=modeValue
+                        Log.i("REAd", modeValue[0].toString())
+                    }
+                    Log.i("BluetoothGattCallback", "Readcharacteristic $characteristic")
+                }
+                BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH -> {
+                    Log.e("BluetoothGattCallback", "Read exceeded connection ATT MTU!")
+                }
+                BluetoothGatt.GATT_WRITE_NOT_PERMITTED -> {
+                    Log.e("BluetoothGattCallback", "Read not permitted for!")
+                }
+                else -> {
+                    Log.e("BluetoothGattCallback", "Characteristic read failed, error: $status")
+                }
+            }
+        }
+        override fun onCharacteristicChanged(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic
+        ) {
+            super.onCharacteristicChanged(gatt, characteristic)
+            if (characteristic == btGattCharSpeed) {
+                Log.d("REAd", "get speed")
+                speedValue = characteristic.value
+                Log.i("REAd", speedValue[0].toString())
+            }
         }
     }
-
 
 
     private fun fireDisconnected() {
@@ -180,6 +243,14 @@ class BLEController private constructor(ctx: Context) {
         btGattCharMode!!.value = data
         bluetoothGatt!!.writeCharacteristic(btGattCharMode)
     }
+
+    @SuppressLint("MissingPermission")
+    fun getMode(): ByteArray {
+        bluetoothGatt!!.readCharacteristic(btGattCharMode)
+        Thread.sleep(200)
+        return btGattCharMode!!.value
+    }
+
 
     @SuppressLint("MissingPermission")
     fun sendSpeed(data: ByteArray?) {

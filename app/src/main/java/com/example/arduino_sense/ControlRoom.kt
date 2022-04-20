@@ -3,11 +3,13 @@ package com.example.arduino_sense
 import android.content.Intent
 import android.os.Bundle
 import android.provider.ContactsContract
+import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.example.arduino_sense.databinding.ActivityMainBinding
 import java.lang.Exception
+import java.util.concurrent.ConcurrentLinkedQueue
 
 // Arduino mode => send 0 for auto, 1 for user controlled
 enum class Mode { USER, AUTO }
@@ -40,6 +42,8 @@ class ControlRoom: AppCompatActivity() {
         bleController = BLEController.getInstance(this)
         initButtons()
         initSpeedBar()
+        initMode()
+
 
 //        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
 //        binding.fanSpeed = fanSpeed
@@ -47,6 +51,21 @@ class ControlRoom: AppCompatActivity() {
 
         //
 
+    }
+
+    fun littleEndianConversion(bytes: ByteArray): Int {
+        var result = 0
+        for (i in bytes.indices) {
+            result = result or (bytes[i].toInt() shl 8 * i)
+        }
+        return result
+    }
+
+    private fun initMode() {
+        mode = modes[littleEndianConversion(bleController!!.getMode())]
+        modeButton.setText(mode.btn_text)
+        Log.d("REAd", mode.toString())
+        speedBar.isEnabled = mode.mode === Mode.USER
     }
 
     private fun initButtons() {
@@ -116,6 +135,8 @@ class ControlRoom: AppCompatActivity() {
             fanSpeed = 0
             bleController!!.sendSpeed(byteArrayOf(fanSpeed.toByte()))
             modeButton.setText(mode.btn_text)
+            speedBar.progress = 0
+            speedBar.isEnabled = true
         }
     }
     private fun inittempButton() {
@@ -124,7 +145,7 @@ class ControlRoom: AppCompatActivity() {
             try {
                 nickname=findViewById(R.id.nick_name)
                 nickname.setText(bleController!!.read())
-            }catch (e: Exception){
+            } catch (e: Exception){
                 toast("try again $e")
             }
         }
@@ -138,6 +159,7 @@ class ControlRoom: AppCompatActivity() {
                 mode = if (mode == modes[0]) modes[1] else modes[0]
                 bleController!!.sendMode(mode.to_arduino)
                 modeButton.setText(mode.btn_text)
+                speedBar.isEnabled = mode.mode === Mode.USER
 
             } catch (e: Exception){
                 toast("try again $e")

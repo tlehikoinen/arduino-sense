@@ -7,8 +7,10 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
+import android.provider.ContactsContract
 import android.provider.Settings
 import android.text.method.ScrollingMovementMethod
+import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -39,6 +41,26 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         checkBLESupport()
         checkPermissions()
         disableButtons()
+
+        //bleController?.getMode()
+        restApiExamples()
+    }
+
+    private fun restApiExamples() {
+        // Logs with tag "jpk" different responses
+        val ds = DataService()
+        val us = UserService()
+        us.getUsers()
+        us.createUser(PostUserReq("testi45", "salasana"))
+        us.loginUser(PostUserReq("testi45", "salasana"))
+
+        ds.fetchUserData("tommi")
+        ds.fetchAllData()
+        ds.postData(
+            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RpNDIiLCJpZCI6NDksImlhdCI6MTY1MDQzNTI1Mn0.Pwj2-RLLJPcSEvFqZIhssJZ2uX18dt0Rn9xAKgKGidI",
+            PostDataReq(24,12)
+        )
+
     }
 
     private fun initConnectButton() {
@@ -66,6 +88,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         openControlRoom.setOnClickListener {
             val intent = Intent(this@MainActivity, ControlRoom::class.java)
             startActivity(intent)
+            //bleController?.getMode()
         }
     }
 
