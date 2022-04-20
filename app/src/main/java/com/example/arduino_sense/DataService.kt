@@ -4,6 +4,7 @@ import android.provider.ContactsContract
 import android.util.Log
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
+import okhttp3.ResponseBody
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -30,6 +31,10 @@ data class TempHumidJsonModel (
     val date: String
 )
 
+data class PostDataReq (
+    val temperature: Int,
+    val humidity: Int
+)
 
 interface TempHumidInterface {
     @GET("data")
@@ -40,13 +45,11 @@ interface TempHumidInterface {
         @Path("username") username: String
     ): Call<List<TempHumidJsonModel>>
 
-    @FormUrlEncoded
     @POST("/data")
     fun postData(
-        @Field("temperature") temperature: Int,
-        @Field("humidity") humidity: Int,
+        @Body dataBody: PostDataReq,
         @Header("Authorization") authorization: String
-    ): Call<List<String>>
+    ): Call<ResponseBody>
 
 }
 
@@ -93,18 +96,21 @@ class DataService {
         )
     }
 
-    fun postData(authorization: String, temperature: Int, humidity: Int) {
-        DataApi.retrofitService.postData(temperature, humidity, authorization).enqueue(
-            object: Callback<List<String>> {
+    fun postData(authorization: String, dataBody: PostDataReq) {
+        DataApi.retrofitService.postData(dataBody, authorization).enqueue(
+            object: Callback<ResponseBody> {
                 override fun onResponse(
-                    call: Call<List<String>>?,
-                    response: Response<List<String>>?
+                    call: Call<ResponseBody>?,
+                    response: Response<ResponseBody>?
                 ) {
-                    Log.d("jpk","Post data response")
-                    Log.d("jpk", response?.code().toString())
+                    if (response?.code() == 200) {
+                        Log.d("jpk","Post data responded with status code ${response?.code().toString()}")
+                        Log.d("jpk", response?.message().toString())
+                    } else {
+                        Log.e("jpk", "Post data failed: ${response?.errorBody()?.string()}")
+                    }
                 }
-
-                override fun onFailure(call: Call<List<String>>?, t: Throwable?) {
+                override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
                     Log.d("jpk", "Post data failed")
                 }
             }
@@ -118,6 +124,14 @@ data class UserJsonModel (
     val password: String
 )
 
+data class PostUserReq (
+    val username: String,
+    val password: String
+)
+
+data class LoginResponse (
+    val token: String
+)
 
 interface UserInterface {
     @GET("user")
@@ -128,19 +142,15 @@ interface UserInterface {
         @Path("id") userId: Int
     ): Call<List<UserJsonModel>>
 
-    @FormUrlEncoded
     @POST("/user")
     fun addUser(
-        @Field("username") username: String,
-        @Field("password") password: String
-    ): Call<List<String>>
+        @Body userBody: PostUserReq
+    ): Call<ResponseBody>
 
-    @FormUrlEncoded
     @POST("/user/login")
     fun loginUser(
-        @Field("username") username: String,
-        @Field("password") password: String
-    ): Call<List<String>>
+        @Body userBody: PostUserReq
+    ): Call<ResponseBody>
 
 }
 
@@ -185,35 +195,43 @@ class UserService {
         )
     }
 
-    fun loginUser(username: String, password: String) {
-        UserApi.retrofitService.loginUser(username, password).enqueue(
-            object: Callback<List<String>> {
+    fun loginUser(userBody: PostUserReq) {
+        UserApi.retrofitService.loginUser(userBody).enqueue(
+            object: Callback<ResponseBody> {
                 override fun onResponse(
-                    call: Call<List<String>>?,
-                    response: Response<List<String>>?
+                    call: Call<ResponseBody>?,
+                    response: Response<ResponseBody>?
                 ) {
-                    Log.d("jpk", "login response ${response?.body()}")
+                    if (response?.code() == 200) {
+                        Log.d("jpk", "login successful with status code 200. " +
+                                "Token: ${response?.body().string()}")
+                    } else {
+                        Log.e("jpk", "Login failed with status code ${response?.code()}. ${response?.message().toString()}")
+                    }
                 }
 
-                override fun onFailure(call: Call<List<String>>?, t: Throwable?) {
-                    Log.d("jpk", "Login failed")
+                override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                    Log.e("jpk", "Login failed")
                 }
             }
         )
     }
 
-    fun createUser(username: String, password: String) {
-        UserApi.retrofitService.addUser(username, password).enqueue(
-            object: Callback<List<String>> {
+    fun createUser(userBody: PostUserReq) {
+        UserApi.retrofitService.addUser(userBody).enqueue(
+            object: Callback<ResponseBody> {
                 override fun onResponse(
-                    call: Call<List<String>>?,
-                    response: Response<List<String>>?
+                    call: Call<ResponseBody>?,
+                    response: Response<ResponseBody>?
                 ) {
-                    Log.d("jpk", "Create user response ${response?.body()}")
-                    Log.d("jpk", response?.code().toString())
+                    if (response?.code() == 200) {
+                        Log.d("jpk", "Create user responded with status code 200 ${response?.message()}")
+                    } else {
+                        Log.e("jpk", "Creating user failed with status code ${response?.code()} " +
+                                "${response?.errorBody()?.string()}")
+                    }
                 }
-
-                override fun onFailure(call: Call<List<String>>?, t: Throwable?) {
+                override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
                     Log.d("jpk", "Create user failed")
                 }
             }

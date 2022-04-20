@@ -50,16 +50,16 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         // Logs with tag "jpk" different responses
         val ds = DataService()
         val us = UserService()
-        Log.d("jpk", "USER SERVICE")
         us.getUsers()
-        us.createUser("user", "salasana")
-        us.loginUser("user", "salasana")
+        us.createUser(PostUserReq("testi45", "salasana"))
+        us.loginUser(PostUserReq("testi45", "salasana"))
 
-
-        Log.d("jpk", "DATA SERVICE")
         ds.fetchUserData("tommi")
         ds.fetchAllData()
-        ds.postData("token", 10, 20)
+        ds.postData(
+            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RpNDIiLCJpZCI6NDksImlhdCI6MTY1MDQzNTI1Mn0.Pwj2-RLLJPcSEvFqZIhssJZ2uX18dt0Rn9xAKgKGidI",
+            PostDataReq(24,12)
+        )
 
     }
 
