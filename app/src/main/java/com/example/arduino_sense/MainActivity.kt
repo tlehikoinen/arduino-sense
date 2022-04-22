@@ -7,10 +7,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.LocationManager
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.provider.Settings
 import android.text.method.ScrollingMovementMethod
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -30,7 +28,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.connect_layout)
+        setContentView(R.layout.activity_main)
         bleController = BLEController.getInstance(this)
         logView = findViewById(R.id.logView)
         logView.movementMethod = ScrollingMovementMethod()

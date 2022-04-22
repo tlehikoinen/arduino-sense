@@ -2,7 +2,6 @@ package com.example.arduino_sense
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.util.Log
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -38,7 +37,7 @@ class ControlRoom: AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        setContentView(R.layout.control_room_layout)
         bleController = BLEController.getInstance(this)
         initButtons()
         initSpeedBar()
