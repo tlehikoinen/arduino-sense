@@ -11,23 +11,73 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
+enum class ActionType {
+    writeDescriptor, readCharacteristic, writeCharacteristic
+}
 
 class BLEController private constructor(ctx: Context) {
     private var scanner: BluetoothLeScanner? = null
     private var device: BluetoothDevice? = null
-    private var bluetoothGatt: BluetoothGatt? = null
-    private var descriptor: BluetoothGattDescriptor? = null
+    private lateinit var bluetoothGatt: BluetoothGatt
+    private lateinit var descriptor: BluetoothGattDescriptor
     private val bluetoothManager: BluetoothManager = ctx.getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
-    private lateinit var tempvalue: ByteArray
-    private lateinit var modeValue: ByteArray
-    private lateinit var speedValue: ByteArray
-    private var btGattCharLed: BluetoothGattCharacteristic? = null
-    private var btGattCharTemp: BluetoothGattCharacteristic? = null
-    private var btGattCharHumidity: BluetoothGattCharacteristic? = null
-    private var btGattCharMode: BluetoothGattCharacteristic? = null
-    private var btGattCharSpeed: BluetoothGattCharacteristic? = null
+    private lateinit var btGattCharLed: BluetoothGattCharacteristic
+    private lateinit var btGattCharTemp: BluetoothGattCharacteristic
+    private lateinit var btGattCharHumidity: BluetoothGattCharacteristic
+    private lateinit var btGattCharMode: BluetoothGattCharacteristic
+    private lateinit var btGattCharSpeed: BluetoothGattCharacteristic
     private val listeners = ArrayList<BLEControllerListener>()
     private val devices = HashMap<String, BluetoothDevice>()
+
+    inner class Action(val type: ActionType, val `object`: Any)
+
+    private val bleQueue: Queue<Action> = LinkedList<Action>()
+
+    fun writeDescriptor(descriptor: BluetoothGattDescriptor) {
+        addAction(ActionType.writeDescriptor, descriptor)
+    }
+
+    fun readCharacteristic(characteristic: BluetoothGattCharacteristic) {
+        addAction(ActionType.readCharacteristic, characteristic)
+    }
+
+    fun writeCharacteristic(characteristic: BluetoothGattCharacteristic) {
+        addAction(ActionType.writeCharacteristic, characteristic)
+    }
+
+    private fun addAction(actionType: ActionType, `object`: Any) {
+        bleQueue.add(Action(actionType, `object`))
+        // if there is only 1 item in the queue, then process it. If more than
+        // 1,
+        // we handle asynchronously in the callback.
+        if (bleQueue.size === 1) nextAction()
+    }
+
+    @SuppressLint("MissingPermission")
+    private fun nextAction() {
+        if (bleQueue.isEmpty()) return
+        val action: Action = bleQueue.element()
+        if (ActionType.writeDescriptor == action.type) {
+            bluetoothGatt.writeDescriptor(
+                action
+                    .`object` as BluetoothGattDescriptor
+            )
+        } else if (ActionType.writeCharacteristic == action.type) {
+            bluetoothGatt
+                .writeCharacteristic(
+                    action
+                        .`object` as BluetoothGattCharacteristic
+                )
+        } else if (ActionType.readCharacteristic == action.type) {
+            bluetoothGatt
+                .readCharacteristic(
+                    action
+                        .`object` as BluetoothGattCharacteristic
+                )
+        } else {
+            Log.e("BLEQueue", "Undefined Action found")
+        }
+    }
 
     fun addBLEControllerListener(l: BLEControllerListener) {
         if (!listeners.contains(l)) listeners.add(l)
@@ -92,11 +142,11 @@ class BLEController private constructor(ctx: Context) {
                     Log.i("[BLE]", "start service discovery " + bluetoothGatt!!.discoverServices())
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
-                    btGattCharTemp = null
-                    btGattCharLed = null
-                    btGattCharHumidity = null
-                    btGattCharMode = null
-                    btGattCharSpeed = null
+//                    btGattCharTemp = null
+//                    btGattCharLed = null
+//                    btGattCharHumidity = null
+//                    btGattCharMode = null
+//                    btGattCharSpeed = null
                     Log.w("[BLE]", "DISCONNECTED with status $status")
                     fireDisconnected()
                 }
@@ -105,7 +155,6 @@ class BLEController private constructor(ctx: Context) {
                 }
             }
         }
-
 
         @SuppressLint("MissingPermission")
         override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
@@ -117,17 +166,29 @@ class BLEController private constructor(ctx: Context) {
                     for (characteristic in characteristics) {
                         if (characteristic.uuid.toString().startsWith("00002a57")) {
                             btGattCharLed = characteristic
+                            readCharacteristic(btGattCharLed)   // Led state is read at start, Currently Arduino switches led off on ble disconnect.
                         }
                         if (characteristic.uuid.toString().startsWith("00002ba3")) {
                             btGattCharMode = characteristic
-                            bluetoothGatt!!.readCharacteristic(btGattCharMode)
+                            readCharacteristic(btGattCharMode)
                         }
                         if (characteristic.uuid.toString().startsWith("00002a6e")) {
                             btGattCharTemp = characteristic
-                            bluetoothGatt!!.readCharacteristic(btGattCharTemp)
+                            gatt.setCharacteristicNotification(btGattCharTemp, true)
+                            descriptor = characteristic.getDescriptor(UUID
+                                .fromString("00002902-0000-1000-8000-00805f9b34fb"))
+                            descriptor!!.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                            writeDescriptor(descriptor!!)
+                            readCharacteristic(btGattCharTemp)
                         }
                         if (characteristic.uuid.toString().startsWith("00002a6f")) {
                             btGattCharHumidity = characteristic
+                            gatt.setCharacteristicNotification(btGattCharHumidity, true)
+                            descriptor = characteristic.getDescriptor(UUID
+                                .fromString("00002902-0000-1000-8000-00805f9b34fb"))
+                            descriptor!!.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
+                            writeDescriptor(descriptor!!)
+                            readCharacteristic(btGattCharHumidity)
                         }
                         if (characteristic.uuid.toString().startsWith("00002a67")) {
                             btGattCharSpeed = characteristic
@@ -135,13 +196,36 @@ class BLEController private constructor(ctx: Context) {
                             descriptor = characteristic.getDescriptor(UUID
                                 .fromString("00002902-0000-1000-8000-00805f9b34fb"))
                             descriptor!!.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE)
-                            bluetoothGatt!!.writeDescriptor(descriptor)
-
+                            writeDescriptor(descriptor!!)
                         }
                         Log.i("[BLE]", "CONNECTED")
                     }
                 }
             }
+        }
+
+        override fun onDescriptorWrite(
+            gatt: BluetoothGatt?,
+            descriptor: BluetoothGattDescriptor?,
+            status: Int
+        ) {
+            super.onDescriptorWrite(gatt, descriptor, status)
+            when (status) {
+                BluetoothGatt.GATT_SUCCESS -> {
+                    Log.i("BluetoothGattCallback", "Wrote to descriptor $gatt")
+                }
+                BluetoothGatt.GATT_INVALID_ATTRIBUTE_LENGTH -> {
+                    Log.e("BluetoothGattCallback", "Write exceeded connection ATT MTU!")
+                }
+                BluetoothGatt.GATT_WRITE_NOT_PERMITTED -> {
+                    Log.e("BluetoothGattCallback", "Write not permitted!")
+                }
+                else -> {
+                    Log.e("BluetoothGattCallback", "Characteristic description write failed error: $status")
+                }
+            }
+            bleQueue.remove()
+            nextAction()
         }
 
         override fun onCharacteristicWrite(
@@ -165,9 +249,8 @@ class BLEController private constructor(ctx: Context) {
                     }
                 }
             }
-
-//            super.onCharacteristicWrite(gatt, characteristic, status)
-//            Log.i("TAG", "Characteristic " + characteristic.uuid + " written")
+            bleQueue.remove()
+            nextAction()
         }
 
         @SuppressLint("MissingPermission")
@@ -180,16 +263,23 @@ class BLEController private constructor(ctx: Context) {
                 BluetoothGatt.GATT_SUCCESS -> {
                     if (characteristic == btGattCharTemp) {
                         Log.d("REAd", "get temp")
-
-                        tempvalue = characteristic.value
-                        btGattCharTemp!!.value = tempvalue
-                        Log.i("REAd", tempvalue[0].toString())
+                        data.setTemperature(characteristic.value[0].toString().toInt())
                     }
-                    if(characteristic==btGattCharMode){
-                        Log.i("REAd", "get char mode")
-                        modeValue = characteristic.value
-                        btGattCharMode!!.value=modeValue
-                        Log.i("REAd", modeValue[0].toString())
+                    if(characteristic == btGattCharMode){
+                        data.setMode(if (characteristic.value[0].toString().toInt() == 0) Modes.AUTO else Modes.USER)
+                    }
+                    if (characteristic == btGattCharHumidity) {
+                        data.setHumidity(characteristic.value[0].toString().toInt())
+                    }
+                    if (characteristic == btGattCharSpeed) {
+                        if (data.getMode() == Modes.USER) {
+                            data.setSpeedUser(characteristic.value[0].toString().toInt())
+                        } else {
+                            data.setSpeedAuto(characteristic.value[0].toString().toInt())
+                        }
+                    }
+                    if (characteristic == btGattCharLed) {
+                        data.setLedMode(if (characteristic.value[0].toString().toInt() == 0) LedMode.OFF else LedMode.ON)
                     }
                     Log.i("BluetoothGattCallback", "Readcharacteristic $characteristic")
                 }
@@ -203,20 +293,26 @@ class BLEController private constructor(ctx: Context) {
                     Log.e("BluetoothGattCallback", "Characteristic read failed, error: $status")
                 }
             }
+            bleQueue.remove()
+            nextAction()
         }
         override fun onCharacteristicChanged(
             gatt: BluetoothGatt?,
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
+            Log.d("Tag", "charasteristic changed")
             if (characteristic == btGattCharSpeed) {
-                Log.d("REAd", "get speed")
-                speedValue = characteristic.value
-                Log.i("REAd", speedValue[0].toString())
+                data.setSpeedAuto(characteristic.value[0].toString().toInt())
+            }
+            if (characteristic == btGattCharTemp) {
+                data.setTemperature(characteristic.value[0].toString().toInt())
+            }
+            if (characteristic == btGattCharHumidity) {
+                data.setHumidity(characteristic.value[0].toString().toInt())
             }
         }
     }
-
 
     private fun fireDisconnected() {
         for (l in listeners) l.bleControllerDisconnected()
@@ -235,37 +331,35 @@ class BLEController private constructor(ctx: Context) {
     @SuppressLint("MissingPermission") //led
     fun sendLEDData(data: ByteArray?) {
         btGattCharLed!!.value = data
-        bluetoothGatt!!.writeCharacteristic(btGattCharLed)
+        writeCharacteristic(btGattCharLed)
     }
 
     @SuppressLint("MissingPermission")
     fun sendMode(data: ByteArray?) {
         btGattCharMode!!.value = data
-        bluetoothGatt!!.writeCharacteristic(btGattCharMode)
+        writeCharacteristic(btGattCharMode)
     }
 
     @SuppressLint("MissingPermission")
     fun getMode(): ByteArray {
-        bluetoothGatt!!.readCharacteristic(btGattCharMode)
-        Thread.sleep(200)
+        readCharacteristic(btGattCharMode)
         return btGattCharMode!!.value
     }
-
 
     @SuppressLint("MissingPermission")
     fun sendSpeed(data: ByteArray?) {
         btGattCharSpeed!!.value = data
-        bluetoothGatt!!.writeCharacteristic(btGattCharSpeed)
+        writeCharacteristic(btGattCharSpeed)
     }
 
     @SuppressLint("MissingPermission")
-    fun readi(): ByteArray {
-        bluetoothGatt!!.readCharacteristic(btGattCharTemp)
-        return tempvalue
+    fun readTemp() {
+        readCharacteristic(btGattCharTemp)
     }
 
-    fun read(): String {
-        return readi()[0].toString()
+    @SuppressLint("MissingPermission")
+    fun readSpeed() {
+        readCharacteristic(btGattCharSpeed)
     }
 
     @SuppressLint("MissingPermission")
@@ -282,5 +376,4 @@ class BLEController private constructor(ctx: Context) {
             return instance
         }
     }
-
 }

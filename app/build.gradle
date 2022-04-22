@@ -2,10 +2,9 @@ plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
 }
-
+apply plugin: 'kotlin-kapt'
 android {
     compileSdk 31
-
     defaultConfig {
         applicationId "com.example.arduino_sense"
         minSdk 23

@@ -17,7 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
-
+var data = AppData()
 class MainActivity : AppCompatActivity(), BLEControllerListener {
     private lateinit var logView: TextView
     private lateinit var connectButton: Button

@@ -3,53 +3,43 @@ package com.example.arduino_sense
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.MotionEvent
+import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
-import com.example.arduino_sense.databinding.ActivityMainBinding
+import com.example.arduino_sense.databinding.ControlRoomLayoutBinding
 import java.lang.Exception
-import java.util.concurrent.ConcurrentLinkedQueue
 
-// Arduino mode => send 0 for auto, 1 for user controlled
-enum class Mode { USER, AUTO }
-data class FanMode(val btn_text: String, val mode: Mode, val to_arduino: ByteArray)
-val modes: List<FanMode> = listOf(
-    FanMode("User", Mode.AUTO, byteArrayOf(0)),
-    FanMode("Auto", Mode.USER, byteArrayOf(1))
-)
-
-data class FanSpeed(var speed: Int)
+/* Note about seekbar:
+Seekbar does not have xml property for being greyed out.
+This means the enabled/disabled state can't be binded to mode changes.
+It is possible to disable response to thumb activity by returning true from onTouchListener...
+... when mode is "Auto".
+But to notify user more clearly if the seekbar is enabled for change...
+... we are calling setSpeedBarVisibility() from every function that changes state.
+This programmatically enables/disables the seekbar.
+*/
 
 class ControlRoom: AppCompatActivity() {
-    private lateinit var disconnectButton: Button
-    private lateinit var tempButton: Button
-    private lateinit var modeButton: Button
-    private lateinit var fanOffButton: Button
-    private lateinit var switchLEDButton: ImageButton
-    private lateinit var nickname: EditText
-    private lateinit var speedBar: SeekBar
     private var bleController: BLEController? = null
-    private var isLEDOn = false
-    private var mode = modes[1] // User mode default
-//    private lateinit var binding: ActivityMainBinding
-//    private var fanSpeed = FanSpeed(2)
-    private var fanSpeed = 0
+    private lateinit var binding: ControlRoomLayoutBinding
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.control_room_layout)
         bleController = BLEController.getInstance(this)
-        initButtons()
-        initSpeedBar()
+
+        binding = DataBindingUtil.setContentView(this, R.layout.control_room_layout)
+        binding.datas = data
+        binding.autoButton.setOnClickListener { toggleMode() }
+        binding.btnGetTemp.setOnClickListener { getTemp() }
+        binding.offButton.setOnClickListener { turnFanOff() }
+        binding.btnDisconnect.setOnClickListener { disconnectBle() }
+        binding.speedBar.setOnSeekBarChangeListener(speedBarListener())
+        binding.speedBar.setOnTouchListener(speedBarState())    // Note about seekbar
+        binding.imgBtnLed.setOnClickListener { toggleLed() }
         initMode()
-
-
-//        binding = DataBindingUtil.setContentView(this, R.layout.activity_main)
-//        binding.fanSpeed = fanSpeed
-//        binding.autoButton.setOnClickListener { toggleMode() }
-
-        //
-
     }
 
     fun littleEndianConversion(bytes: ByteArray): Int {
@@ -60,26 +50,19 @@ class ControlRoom: AppCompatActivity() {
         return result
     }
 
+
+    fun numberToByteArray (data: Number, size: Int = 4) : ByteArray =
+        ByteArray (size) {i -> (data.toLong() shr (i*8)).toByte()}
+
     private fun initMode() {
-        mode = modes[littleEndianConversion(bleController!!.getMode())]
-        modeButton.setText(mode.btn_text)
-        Log.d("REAd", mode.toString())
-        speedBar.isEnabled = mode.mode === Mode.USER
+        data.setMode(if (littleEndianConversion(bleController!!.getMode()) == 0) Modes.AUTO else Modes.USER)
+        bleController!!.readSpeed()
+        Log.d("REAd", data.getMode().toString())
+        setSpeedBarVisibility()
     }
 
-    private fun initButtons() {
-        initSwitchLEDButton()
-        initDisconnectButton()
-        inittempButton()
-        initToggleModeButton()
-        initFanOffButton()
-    }
-
-    private fun initSpeedBar() {
-        speedBar = findViewById(R.id.speedBar)
-
-        val seek = findViewById<SeekBar>(R.id.speedBar)
-        seek?.setOnSeekBarChangeListener(object :
+    private fun speedBarListener(): SeekBar.OnSeekBarChangeListener {
+        return object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seek: SeekBar,
                                            progress: Int, fromUser: Boolean) {
@@ -92,13 +75,15 @@ class ControlRoom: AppCompatActivity() {
                 // write custom code for progress is stopped
                 changeFanSpeed(seek.progress.toInt())
             }
-        })
-
+        }
+    }
+    fun speedBarState(): View.OnTouchListener {
+        // Disable changes on seekbar by in auto mode
+        return View.OnTouchListener { p0, p1 -> data.getMode() == Modes.AUTO }
     }
 
     private fun changeFanSpeed(speed: Int) {
-        toast(speed.toString())
-        fanSpeed = speed
+        data.setSpeedUser(speed)
         bleController!!.sendSpeed(byteArrayOf(speed.toByte()))
 
     }
@@ -113,81 +98,63 @@ class ControlRoom: AppCompatActivity() {
         }
     }
 
-    private fun initSwitchLEDButton() {
-        switchLEDButton = findViewById(R.id.imageButton3)
-        switchLEDButton.setOnClickListener{
-            val images = intArrayOf(R.drawable.candle_off, R.drawable.candle_on)
-            switchLEDButton.setImageResource(images[if (isLEDOn) 1 else 0])
-            isLEDOn = !isLEDOn
-            switchLED(bleController,isLEDOn)
-            toast("LED switched " + if (isLEDOn) "On" else "Off")
-        }
+    private fun toggleLed() {
+        data.toggleLed()
+        bleController!!.sendLEDData(data.getLedMode().to_arduino)
     }
 
-    private fun initFanOffButton() {
-        fanOffButton = findViewById(R.id.off_button)
-        fanOffButton.setOnClickListener{
-            mode = modes[1] // Set mode to user
-
-            bleController!!.sendMode(mode.to_arduino)
-            Thread.sleep(200);  // Wait before sending new packet
-            fanSpeed = 0
-            bleController!!.sendSpeed(byteArrayOf(fanSpeed.toByte()))
-            modeButton.setText(mode.btn_text)
-            speedBar.progress = 0
-            speedBar.isEnabled = true
-        }
-    }
-    private fun inittempButton() {
-        tempButton = findViewById(R.id.button23)
-        tempButton.setOnClickListener{
-            try {
-                nickname=findViewById(R.id.nick_name)
-                nickname.setText(bleController!!.read())
-            } catch (e: Exception){
-                toast("try again $e")
-            }
-        }
-    }
-    private fun initToggleModeButton() {
-        modeButton = findViewById(R.id.auto_button)
-        modeButton.setText(mode.btn_text)
-        modeButton.setOnClickListener{
-            try {
-                toast("Toggled mode to ${mode.btn_text}")
-                mode = if (mode == modes[0]) modes[1] else modes[0]
-                bleController!!.sendMode(mode.to_arduino)
-                modeButton.setText(mode.btn_text)
-                speedBar.isEnabled = mode.mode === Mode.USER
-
-            } catch (e: Exception){
-                toast("try again $e")
-            }
-        }
-    }
-
-//    private fun toggleMode() {
-//        try {
-//            toast("Toggled mode to ${mode.btn_text}")
-//            mode = if (mode == modes[0]) modes[1] else modes[0]
-//            bleController!!.sendMode(mode.to_arduino)
-//            modeButton.setText(mode.btn_text)
-//
-//        } catch (e: Exception){
-//            toast("try again $e")
+//    private fun initSwitchLEDButton() {
+//        switchLEDButton = findViewById(R.id.imageButton3)
+//        switchLEDButton.setOnClickListener{
+//            val images = intArrayOf(R.drawable.candle_off, R.drawable.candle_on)
+//            switchLEDButton.setImageResource(images[if (isLEDOn) 1 else 0])
+//            isLEDOn = !isLEDOn
+//            switchLED(bleController,isLEDOn)
+//            toast("LED switched " + if (isLEDOn) "On" else "Off")
 //        }
 //    }
 
+    private fun setSpeedBarVisibility() {
+        binding.speedBar.isEnabled = data.getMode() == Modes.USER
+    }
+
+    private fun turnFanOff() {
+        data.setMode(Modes.USER)
+        data.setSpeedUser(0)
+        bleController!!.sendMode(data.getMode().to_arduino)
+        bleController!!.sendSpeed(byteArrayOf(0))
+        setSpeedBarVisibility()
+    }
+
+    private fun toggleMode() {
+        try {
+            toast("Toggled mode to ${data.getMode().btn_text}")
+            data.toggleMode()
+            bleController!!.sendMode(data.getMode().to_arduino)
+            bleController!!.sendSpeed(numberToByteArray(data.getSpeed()))
+            //binding.speedBar.isEnabled = false
+            setSpeedBarVisibility()
+
+        } catch (e: Exception){
+            toast("try again $e")
+        }
+    }
+
+    private fun getTemp() {
+        try {
+            bleController!!.readTemp()
+        } catch (e: Exception){
+            toast("try again $e")
+        }
+    }
+
+    private fun disconnectBle() {
+        toast("Disconnecting")
+        bleController!!.disconnect()
+        val intent = Intent(this@ControlRoom, MainActivity::class.java)
+        startActivity(intent)
+    }
     private fun toast(text: String) {
         Toast.makeText(this, text, Toast.LENGTH_LONG).show()
-    }
-    private fun initDisconnectButton() {
-        disconnectButton = findViewById(R.id.button24)
-        disconnectButton.setOnClickListener{
-            toast("Disconnecting")
-            bleController!!.disconnect()
-            val intent = Intent(this@ControlRoom, MainActivity::class.java)
-            startActivity(intent)
-        }
     }
 }
