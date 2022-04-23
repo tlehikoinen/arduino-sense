@@ -1,9 +1,11 @@
 package com.example.arduino_sense
 
-import android.media.Image
-import android.util.Log
+import android.content.Context
+import android.preference.PreferenceManager
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
+import android.content.SharedPreferences
+
 
 // Arduino mode => send 0 for auto, 1 for user controlled
 enum class Modes {
@@ -43,10 +45,15 @@ class AppData : BaseObservable() {
     private var speed_of_fan_user = 0
     private var speed_of_fan_auto = 0
     private var mode = Modes.USER
-
-
     private var ledMode: LedMode = LedMode.OFF
+    private var token = ""
 
+    fun getToken(): String {
+        return token
+    }
+    fun setToken(value: String) {
+        token = value
+    }
     @Bindable
     fun getLedMode(): LedMode {
         return ledMode
@@ -62,7 +69,6 @@ class AppData : BaseObservable() {
         ledMode = if (ledMode == LedMode.OFF) LedMode.ON else LedMode.OFF
         notifyPropertyChanged(BR.ledMode)
     }
-
 
     @Bindable
     fun getMode(): Modes {
@@ -111,5 +117,4 @@ class AppData : BaseObservable() {
         temperature = value
         notifyPropertyChanged(BR.temperature)
     }
-
 }

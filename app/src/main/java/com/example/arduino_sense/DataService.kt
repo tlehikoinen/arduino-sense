@@ -1,6 +1,5 @@
 package com.example.arduino_sense
 
-import android.provider.ContactsContract
 import android.util.Log
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
@@ -129,10 +128,6 @@ data class PostUserReq (
     val password: String
 )
 
-data class LoginResponse (
-    val token: String
-)
-
 interface UserInterface {
     @GET("user")
     fun getAllUsers(): Call<List<UserJsonModel>>
@@ -161,6 +156,14 @@ object UserApi {
 }
 
 class UserService {
+    interface LoginCallback {
+        fun onSuccess(token: String)
+        fun onFailure()
+    }
+    interface SignupCallback {
+        fun onSuccess(message: String)
+        fun onFailure(errorMessage: String)
+    }
     fun getUsers() {
         UserApi.retrofitService.getAllUsers().enqueue(
             object: Callback<List<UserJsonModel>> {
@@ -195,7 +198,8 @@ class UserService {
         )
     }
 
-    fun loginUser(userBody: PostUserReq) {
+    fun loginUser(userBody: PostUserReq, loginCallback: LoginCallback) {
+        var token: String = ""
         UserApi.retrofitService.loginUser(userBody).enqueue(
             object: Callback<ResponseBody> {
                 override fun onResponse(
@@ -203,21 +207,25 @@ class UserService {
                     response: Response<ResponseBody>?
                 ) {
                     if (response?.code() == 200) {
+                        token = response?.body().string()
                         Log.d("jpk", "login successful with status code 200. " +
-                                "Token: ${response?.body().string()}")
+                                "Token: ${token}")
+                        loginCallback.onSuccess(token)
                     } else {
                         Log.e("jpk", "Login failed with status code ${response?.code()}. ${response?.message().toString()}")
+                        loginCallback.onFailure()
                     }
                 }
 
                 override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                    loginCallback.onFailure()
                     Log.e("jpk", "Login failed")
                 }
             }
         )
     }
 
-    fun createUser(userBody: PostUserReq) {
+    fun createUser(userBody: PostUserReq, signupCallback: SignupCallback) {
         UserApi.retrofitService.addUser(userBody).enqueue(
             object: Callback<ResponseBody> {
                 override fun onResponse(
@@ -226,12 +234,18 @@ class UserService {
                 ) {
                     if (response?.code() == 200) {
                         Log.d("jpk", "Create user responded with status code 200 ${response?.message()}")
+                        signupCallback.onSuccess("User created successfully")
                     } else {
+                        val errorMessage = response?.errorBody()?.string() ?: "Empty error message"
+                        if (response != null) {
+                            signupCallback.onFailure(errorMessage)
+                        }
                         Log.e("jpk", "Creating user failed with status code ${response?.code()} " +
-                                "${response?.errorBody()?.string()}")
+                                "${errorMessage}")
                     }
                 }
                 override fun onFailure(call: Call<ResponseBody>?, t: Throwable?) {
+                    signupCallback.onFailure("Create user failed")
                     Log.d("jpk", "Create user failed")
                 }
             }

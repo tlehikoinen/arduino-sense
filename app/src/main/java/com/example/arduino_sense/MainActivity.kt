@@ -2,13 +2,18 @@ package com.example.arduino_sense
 import android.Manifest
 import android.annotation.SuppressLint
 import android.bluetooth.BluetoothAdapter
+import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.LocationManager
+import android.opengl.Visibility
 import android.os.Bundle
 import android.provider.Settings
 import android.text.method.ScrollingMovementMethod
+import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -23,34 +28,85 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private lateinit var connectButton: Button
     private lateinit var disconnectButton: Button
     private lateinit var openControlRoom: Button
+    private lateinit var openLogin: Button
+    private lateinit var openSignup: Button
     private var bleController: BLEController? = null
     private lateinit var deviceAddress: String
+    lateinit var pref: SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        pref = this.getSharedPreferences("token", Context.MODE_PRIVATE)
         setContentView(R.layout.activity_main)
+        readToken()
         bleController = BLEController.getInstance(this)
         logView = findViewById(R.id.logView)
         logView.movementMethod = ScrollingMovementMethod()
         initConnectButton()
         initDisconnectButton()
         initControlRoomButton()
+        initOpenLogin()
+        initOpenSignup()
         statusCheck()
         checkBLESupport()
         checkPermissions()
         disableButtons()
 
         //bleController?.getMode()
-        restApiExamples()
+        //restApiExamples()
     }
+
+    private fun readToken() {
+        val token = pref.getString("token", "DEFAULT").toString()
+        data.setToken(token)
+    }
+
+    private fun initOpenSignup() {
+        openSignup = findViewById(R.id.btn_open_signup)
+        openSignup.setOnClickListener {
+            val intent = Intent(this@MainActivity, SignupActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    private fun initOpenLogin() {
+        openLogin = findViewById(R.id.btn_open_login)
+        openLogin.setOnClickListener {
+            loginOrLogout()
+        }
+        loginOrLogoutText()
+    }
+
+    private fun loginOrLogout() {
+        if (data.getToken().startsWith("Bearer")) {
+            logout()
+        } else {
+            val intent = Intent(this@MainActivity, LoginActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    private fun loginOrLogoutText() {
+        openLogin.setText(if (data.getToken().startsWith("Bearer ")) "Logout" else "Login")
+    }
+
+    private fun logout() {
+        data.setToken("")
+        val edit = pref.edit()
+        edit.putString("token", "")
+        edit.commit()
+        loginOrLogoutText()
+    }
+
+    private fun toggleLoginBtn() {}
 
     private fun restApiExamples() {
         // Logs with tag "jpk" different responses
         val ds = DataService()
         val us = UserService()
         us.getUsers()
-        us.createUser(PostUserReq("testi45", "salasana"))
-        us.loginUser(PostUserReq("testi45", "salasana"))
+        //us.createUser(PostUserReq("testi45", "salasana"))
+        //us.loginUser(PostUserReq("testi45", "salasana"))
 
         ds.fetchUserData("tommi")
         ds.fetchAllData()
@@ -84,8 +140,13 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private fun initControlRoomButton() {
         openControlRoom = findViewById(R.id.switchButton)
         openControlRoom.setOnClickListener {
-            val intent = Intent(this@MainActivity, ControlRoom::class.java)
-            startActivity(intent)
+            if (data.getToken().startsWith("Bearer ")) {
+                val intent = Intent(this@MainActivity, ControlRoom::class.java)
+                startActivity(intent)
+            } else {
+                toast("Login first")
+            }
+
             //bleController?.getMode()
         }
     }
@@ -169,6 +230,9 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
 
     override fun onResume() {
         super.onResume()
+        data.setToken(pref.getString("token", "DEFAULT")?: "")
+
+        Log.d("tag","resume")
         deviceAddress = ""
         bleController = BLEController.getInstance(this)
         bleController!!.addBLEControllerListener(this)
@@ -179,10 +243,15 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
             //toast("[BLE]\tSearching for Arduino nano");
             bleController!!.init()
         }
+
+        if (data.getToken().startsWith("Bearer ")) {
+            loginOrLogoutText()
+        }
     }
 
     override fun onPause() {
         super.onPause()
+        Log.d("tag", "PAUSED")
         bleController!!.removeBLEControllerListener(this)
     }
 
@@ -192,6 +261,9 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
             disconnectButton.isEnabled = true
             //toast("BLE Connected!");
             openControlRoom.isEnabled = true
+
+//            if (data.getToken().startsWith("Bearer")) {
+//            }
         }
     }
 

@@ -301,7 +301,7 @@ class BLEController private constructor(ctx: Context) {
             characteristic: BluetoothGattCharacteristic
         ) {
             super.onCharacteristicChanged(gatt, characteristic)
-            Log.d("Tag", "charasteristic changed")
+            //Log.d("Tag", "charasteristic changed")
             if (characteristic == btGattCharSpeed) {
                 data.setSpeedAuto(characteristic.value[0].toString().toInt())
             }
