@@ -58,6 +58,7 @@ class LoginActivity : AppCompatActivity() {
                 Log.d("tag", "LOGIN SUCCESS")
                 Log.d("tag", "$token")
                 saveToken(token)
+                data.setUsername(reqUser.username)
                 data.setToken(token)
                 onBackPressed()
             }

@@ -176,14 +176,14 @@
                         android:orientation="horizontal">
 
                         <ImageButton
-                            android:id="@+id/imageButton5"
+                            android:id="@+id/btn_open_temp_data"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             app:srcCompat="@drawable/lightsensor" />
 
                         <ImageButton
-                            android:id="@+id/imageButton"
+                            android:id="@+id/btn_open_humidity_data"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"

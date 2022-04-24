@@ -2,14 +2,16 @@ package com.example.arduino_sense
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.CountDownTimer
+import android.os.Handler
 import android.util.Log
-import android.view.MotionEvent
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import com.example.arduino_sense.databinding.ControlRoomLayoutBinding
-import java.lang.Exception
+import kotlinx.coroutines.*
+import java.util.*
 
 /* Note about seekbar:
 Seekbar does not have xml property for being greyed out.
@@ -24,7 +26,8 @@ This programmatically enables/disables the seekbar.
 class ControlRoom: AppCompatActivity() {
     private var bleController: BLEController? = null
     private lateinit var binding: ControlRoomLayoutBinding
-
+    private var dataService = DataService()
+    private lateinit var job: Job
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.control_room_layout)
@@ -39,7 +42,30 @@ class ControlRoom: AppCompatActivity() {
         binding.speedBar.setOnSeekBarChangeListener(speedBarListener())
         binding.speedBar.setOnTouchListener(speedBarState())    // Note about seekbar
         binding.imgBtnLed.setOnClickListener { toggleLed() }
+        binding.btnOpenTempData.setOnClickListener{ openData() }
         initMode()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        job.cancel()
+    }
+    override fun onResume() {
+        super.onResume()
+        job = startRepeatingJob(300000) // 5 minutes
+    }
+
+
+    // Save data to server every n ms
+    private fun startRepeatingJob(timeInterval: Long): Job {
+        return CoroutineScope(Dispatchers.Default).launch {
+            while (NonCancellable.isActive) {
+                dataService.postData(data.getToken(),
+                    PostDataReq(data.getTemperature().toInt(), data.getHumidity().toInt()))
+                data.fetchData()
+                delay(timeInterval)
+            }
+        }
     }
 
     fun littleEndianConversion(bytes: ByteArray): Int {
@@ -50,6 +76,14 @@ class ControlRoom: AppCompatActivity() {
         return result
     }
 
+    fun openData() {
+        try {
+            val intent = Intent(this, DataActivity::class.java)
+            startActivity(intent)
+        } catch(e: Exception) {
+            toast("Failed")
+        }
+    }
 
     fun numberToByteArray (data: Number, size: Int = 4) : ByteArray =
         ByteArray (size) {i -> (data.toLong() shr (i*8)).toByte()}
@@ -62,6 +96,7 @@ class ControlRoom: AppCompatActivity() {
     }
 
     private fun speedBarListener(): SeekBar.OnSeekBarChangeListener {
+
         return object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seek: SeekBar,
@@ -102,17 +137,6 @@ class ControlRoom: AppCompatActivity() {
         data.toggleLed()
         bleController!!.sendLEDData(data.getLedMode().to_arduino)
     }
-
-//    private fun initSwitchLEDButton() {
-//        switchLEDButton = findViewById(R.id.imageButton3)
-//        switchLEDButton.setOnClickListener{
-//            val images = intArrayOf(R.drawable.candle_off, R.drawable.candle_on)
-//            switchLEDButton.setImageResource(images[if (isLEDOn) 1 else 0])
-//            isLEDOn = !isLEDOn
-//            switchLED(bleController,isLEDOn)
-//            toast("LED switched " + if (isLEDOn) "On" else "Off")
-//        }
-//    }
 
     private fun setSpeedBarVisibility() {
         binding.speedBar.isEnabled = data.getMode() == Modes.USER

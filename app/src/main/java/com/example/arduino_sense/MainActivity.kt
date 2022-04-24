@@ -21,6 +21,10 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 
 var data = AppData()
 class MainActivity : AppCompatActivity(), BLEControllerListener {
@@ -33,7 +37,8 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private var bleController: BLEController? = null
     private lateinit var deviceAddress: String
     lateinit var pref: SharedPreferences
-
+    lateinit var coroutineScope: CoroutineScope
+    var dataService = DataService()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         pref = this.getSharedPreferences("token", Context.MODE_PRIVATE)
@@ -51,9 +56,6 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         checkBLESupport()
         checkPermissions()
         disableButtons()
-
-        //bleController?.getMode()
-        //restApiExamples()
     }
 
     private fun readToken() {
@@ -98,25 +100,6 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         loginOrLogoutText()
     }
 
-    private fun toggleLoginBtn() {}
-
-    private fun restApiExamples() {
-        // Logs with tag "jpk" different responses
-        val ds = DataService()
-        val us = UserService()
-        us.getUsers()
-        //us.createUser(PostUserReq("testi45", "salasana"))
-        //us.loginUser(PostUserReq("testi45", "salasana"))
-
-        ds.fetchUserData("tommi")
-        ds.fetchAllData()
-        ds.postData(
-            "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRlc3RpNDIiLCJpZCI6NDksImlhdCI6MTY1MDQzNTI1Mn0.Pwj2-RLLJPcSEvFqZIhssJZ2uX18dt0Rn9xAKgKGidI",
-            PostDataReq(24,12)
-        )
-
-    }
-
     private fun initConnectButton() {
         connectButton = findViewById(R.id.connectButton)
         connectButton.setOnClickListener {
@@ -146,8 +129,6 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
             } else {
                 toast("Login first")
             }
-
-            //bleController?.getMode()
         }
     }
 
@@ -244,7 +225,8 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
             bleController!!.init()
         }
 
-        if (data.getToken().startsWith("Bearer ")) {
+        if (data.getToken().startsWith("Bearer ")) {    // User is now logged in
+            //data.fetchData()
             loginOrLogoutText()
         }
     }
@@ -259,11 +241,8 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         log("[BLE]\tConnected")
         runOnUiThread {
             disconnectButton.isEnabled = true
-            //toast("BLE Connected!");
+            toast("BLE Connected!");
             openControlRoom.isEnabled = true
-
-//            if (data.getToken().startsWith("Bearer")) {
-//            }
         }
     }
 

@@ -5,6 +5,13 @@ import android.preference.PreferenceManager
 import androidx.databinding.BaseObservable
 import androidx.databinding.Bindable
 import android.content.SharedPreferences
+import android.provider.ContactsContract
+import android.util.Log
+import android.widget.Adapter
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 
 
 // Arduino mode => send 0 for auto, 1 for user controlled
@@ -46,7 +53,30 @@ class AppData : BaseObservable() {
     private var speed_of_fan_auto = 0
     private var mode = Modes.USER
     private var ledMode: LedMode = LedMode.OFF
+    private var username = ""
     private var token = ""
+    private var sensorData: List<TempHumidJsonModel>? = null
+
+    fun fetchData() {
+        var dataService = DataService()
+        Log.d("fetch", username)
+
+        Log.d("track", "Fetch started")
+        dataService.fetchUserData(username, object : DataService.DataCallback {
+            override fun onSuccess(data: List<TempHumidJsonModel>?) {
+                Log.d("fetch", "fetch data success")
+                sensorData = data
+            }
+            override fun onFailure(message: String) {
+                Log.e("fetch", "data fetch failed")
+            }
+        })
+        notifyPropertyChanged(BR.sensorData)
+    }
+    @Bindable
+    fun getData(): List<TempHumidJsonModel>? {
+        return sensorData
+    }
 
     fun getToken(): String {
         return token
@@ -59,11 +89,18 @@ class AppData : BaseObservable() {
         return ledMode
     }
 
+    @Bindable
+    fun getUsername(): String {
+        return username
+    }
+    fun setUsername(value: String) {
+        username = value
+    }
+
     fun setLedMode(value: LedMode) {
         ledMode = value
         notifyPropertyChanged(BR.ledMode)
     }
-
 
     fun toggleLed() {
         ledMode = if (ledMode == LedMode.OFF) LedMode.ON else LedMode.OFF

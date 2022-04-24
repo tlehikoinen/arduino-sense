@@ -25,7 +25,7 @@ val retroFit = Retrofit.Builder()
 data class TempHumidJsonModel (
     val id: Int,
     val user_id: Int,
-    val temperature: Int,
+    var temperature: Int,
     val humidity: Int,
     val date: String
 )
@@ -59,6 +59,10 @@ object DataApi {
 }
 
 class DataService {
+    interface DataCallback {
+        fun onSuccess(data: List<TempHumidJsonModel>?)
+        fun onFailure(message: String)
+    }
     fun fetchAllData() {
         DataApi.retrofitService.getAllData().enqueue(
             object: Callback<List<TempHumidJsonModel>> {
@@ -77,19 +81,21 @@ class DataService {
         )
     }
 
-    fun fetchUserData(username: String) {
+    fun fetchUserData(username: String, dataCallBack: DataCallback) {
         DataApi.retrofitService.getUserData(username).enqueue(
             object: Callback<List<TempHumidJsonModel>> {
                 override fun onResponse(
                     call: Call<List<TempHumidJsonModel>>?,
                     response: Response<List<TempHumidJsonModel>>?
                 ) {
-                    Log.d("jpk","Fetching data for $username")
-                    response?.body()?.forEach { Log.d("jpk", "$it")}
+                    Log.d("fetch","Fetching data for $username")
+                    //response?.body()?.forEach { Log.d("fetch", "$it")}
+                    dataCallBack.onSuccess(response?.body())
                 }
 
                 override fun onFailure(call: Call<List<TempHumidJsonModel>>?, t: Throwable?) {
                     Log.d("jpk", "Fetch data for user $username failed")
+                    dataCallBack.onFailure("Data fetch failed")
                 }
             }
         )
