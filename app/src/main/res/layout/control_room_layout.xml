@@ -46,17 +46,17 @@
                                 android:layout_height="wrap_content"
                                 android:orientation="horizontal">
 
-                                <Button
-                                    android:id="@+id/start_button"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
+                                <ImageView
+                                    android:id="@+id/imageView19"
+                                    android:layout_width="171dp"
+                                    android:layout_height="match_parent"
                                     android:layout_weight="1"
-                                    android:text="@string/start_button_text"
-                                    android:textSize="8sp" />
+                                    android:scaleType="fitCenter"
+                                    app:srcCompat="@drawable/images" />
 
                                 <Button
                                     android:id="@+id/auto_button"
-                                    android:layout_width="wrap_content"
+                                    android:layout_width="121dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="@{datas.mode.btn_text}"
@@ -64,53 +64,40 @@
 
                                 <Button
                                     android:id="@+id/off_button"
-                                    android:layout_width="match_parent"
+                                    android:layout_width="129dp"
                                     android:layout_height="wrap_content"
                                     android:layout_weight="1"
                                     android:text="@string/off_button_string"
                                     android:textSize="8sp" />
                             </LinearLayout>
 
-                            <ImageView
-                                android:id="@+id/imageView20"
-                                android:layout_width="match_parent"
-                                android:layout_height="114dp"
-                                android:layout_weight="1"
-                                android:scaleType="fitCenter"
-                                app:srcCompat="@drawable/barometricpressure" />
+
 
                         </LinearLayout>
 
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
-
-                            <ImageView
-                                android:id="@+id/imageView19"
-                                android:layout_width="match_parent"
-                                android:layout_height="match_parent"
-                                android:layout_weight="1"
-                                android:scaleType="fitCenter"
-                                app:srcCompat="@drawable/images" />
-
-                            <SeekBar
-                                android:id="@+id/speedBar"
-                                android:layout_width="match_parent"
-                                android:layout_height="67dp"
-                                android:progress="@{datas.speed}"
-                                android:max="4" />
-
-                        </LinearLayout>
 
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="match_parent">
+                        android:layout_height="wrap_content">
 
-                        <EditText
+                        <SeekBar
+                            android:id="@+id/speedBar"
+                            android:layout_width="match_parent"
+                            android:layout_height="67dp"
+                            android:max="4"
+                            android:progress="@{datas.speed}" />
+
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Temperature:" />
+                        <TextView
                             android:id="@+id/text_temperature"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -119,20 +106,18 @@
                             android:inputType="none"
                             android:text="@{datas.temperature}" />
 
-                        <Button
-                            android:id="@+id/btn_get_temp"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="Get Temperature" />
+
                     </LinearLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
                         android:orientation="horizontal">
-
-                        <EditText
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Humidity:        " />
+                        <TextView
                             android:id="@+id/text_humidity"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
@@ -141,12 +126,7 @@
                             android:inputType="none"
                             android:text="@{datas.humidity}"/>
 
-                        <Button
-                            android:id="@+id/btn_disconnect"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:text="@string/disconnect" />
+
 
                     </LinearLayout>
 
