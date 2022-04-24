@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 // Arduino mode => send 0 for auto, 1 for user controlled
 enum class Modes {
     USER("Auto mode", byteArrayOf(1)),
-    AUTO("User mode", byteArrayOf(0));
+    AUTO("User mode :)", byteArrayOf(0));
 
     // custom properties with default values
     var btn_text: String? = null
@@ -56,6 +56,18 @@ class AppData : BaseObservable() {
     private var username = ""
     private var token = ""
     private var sensorData: List<TempHumidJsonModel>? = null
+    private var isDataViewEnabled: Boolean = false
+
+    @Bindable
+    fun getIsViewEnabled(): Boolean {
+        return isDataViewEnabled
+    }
+
+    fun setIsViewEnabled(value: Boolean) {
+        isDataViewEnabled = value
+        notifyPropertyChanged(BR.isViewEnabled)
+    }
+
 
     fun fetchData() {
         var dataService = DataService()
@@ -66,9 +78,11 @@ class AppData : BaseObservable() {
             override fun onSuccess(data: List<TempHumidJsonModel>?) {
                 Log.d("fetch", "fetch data success")
                 sensorData = data
+                setIsViewEnabled(true)  // Data view can only be opened after successful request
             }
             override fun onFailure(message: String) {
                 Log.e("fetch", "data fetch failed")
+                setIsViewEnabled(false)
             }
         })
         notifyPropertyChanged(BR.sensorData)

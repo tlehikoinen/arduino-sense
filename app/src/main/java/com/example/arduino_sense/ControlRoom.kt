@@ -54,8 +54,11 @@ class ControlRoom: AppCompatActivity() {
         super.onResume()
         job = startRepeatingJob(300000) // 5 minutes
     }
-
-
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
+    }
+    
     // Save data to server every n ms
     private fun startRepeatingJob(timeInterval: Long): Job {
         return CoroutineScope(Dispatchers.Default).launch {
