@@ -36,9 +36,9 @@ class ControlRoom: AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, R.layout.control_room_layout)
         binding.datas = data
         binding.autoButton.setOnClickListener { toggleMode() }
-        binding.btnGetTemp.setOnClickListener { getTemp() }
+        //binding.btnGetTemp.setOnClickListener { getTemp() }
         binding.offButton.setOnClickListener { turnFanOff() }
-        binding.btnDisconnect.setOnClickListener { disconnectBle() }
+        //binding.btnDisconnect.setOnClickListener { disconnectBle() }
         binding.speedBar.setOnSeekBarChangeListener(speedBarListener())
         binding.speedBar.setOnTouchListener(speedBarState())    // Note about seekbar
         binding.imgBtnLed.setOnClickListener { toggleLed() }
@@ -122,6 +122,7 @@ class ControlRoom: AppCompatActivity() {
         bleController!!.sendSpeed(byteArrayOf(speed.toByte()))
 
     }
+    /*
     private fun switchLED(bleController: BLEController?, on: Boolean) {
         val ledon = ByteArray(1)
         val ledoff = ByteArray(1)
@@ -132,6 +133,8 @@ class ControlRoom: AppCompatActivity() {
             bleController!!.sendLEDData(ledon)
         }
     }
+
+     */
 
     private fun toggleLed() {
         data.toggleLed()
@@ -163,7 +166,7 @@ class ControlRoom: AppCompatActivity() {
             toast("try again $e")
         }
     }
-
+/*
     private fun getTemp() {
         try {
             bleController!!.readTemp()
@@ -172,12 +175,16 @@ class ControlRoom: AppCompatActivity() {
         }
     }
 
+ */
+/*
     private fun disconnectBle() {
         toast("Disconnecting")
         bleController!!.disconnect()
         val intent = Intent(this@ControlRoom, MainActivity::class.java)
         startActivity(intent)
     }
+
+ */
     private fun toast(text: String) {
         Toast.makeText(this, text, Toast.LENGTH_LONG).show()
     }

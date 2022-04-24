@@ -39,7 +39,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".ControlRoom" />
+        <activity
+            android:name=".ControlRoom"
+            android:parentActivityName=".MainActivity"/>
     </application>
 
 </manifest>
