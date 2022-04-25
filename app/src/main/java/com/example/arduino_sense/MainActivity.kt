@@ -25,6 +25,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlin.system.exitProcess
 
 var data = AppData()
 class MainActivity : AppCompatActivity(), BLEControllerListener {
@@ -33,7 +34,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private lateinit var disconnectButton: Button
     private lateinit var openControlRoom: Button
     private lateinit var openLogin: Button
-    private lateinit var openSignup: Button
+    //private lateinit var openSignup: Button
     private var bleController: BLEController? = null
     private lateinit var deviceAddress: String
     lateinit var pref: SharedPreferences
@@ -51,18 +52,32 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         initDisconnectButton()
         initControlRoomButton()
         initOpenLogin()
-        initOpenSignup()
+        //initOpenSignup()
         statusCheck()
         checkBLESupport()
         checkPermissions()
         disableButtons()
     }
 
+    override fun onBackPressed(){
+        val builder = AlertDialog.Builder(this)
+        builder.setMessage("Do you want to close the app?")
+            .setCancelable(false)
+            .setPositiveButton("Yes") {
+                    _: DialogInterface?, _: Int ->  exitProcess(0)
+            }
+            .setNegativeButton("No") {
+                    dialog: DialogInterface, _: Int -> dialog.cancel()
+            }
+        val alert = builder.create()
+        alert.show()
+    }
+
     private fun readToken() {
         val token = pref.getString("token", "DEFAULT").toString()
         data.setToken(token)
     }
-
+/*
     private fun initOpenSignup() {
         openSignup = findViewById(R.id.btn_open_signup)
         openSignup.setOnClickListener {
@@ -71,10 +86,23 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         }
     }
 
+ */
+
     private fun initOpenLogin() {
         openLogin = findViewById(R.id.btn_open_login)
         openLogin.setOnClickListener {
-            loginOrLogout()
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage("Do you want to log out?")
+                .setCancelable(false)
+                .setPositiveButton("Yes") {
+                        _: DialogInterface?, _: Int ->  loginOrLogout()
+                }
+                .setNegativeButton("No") {
+                        dialog: DialogInterface, _: Int -> dialog.cancel()
+                }
+            val alert = builder.create()
+            alert.show()
+
         }
         loginOrLogoutText()
     }
@@ -82,6 +110,10 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private fun loginOrLogout() {
         if (data.getToken().startsWith("Bearer")) {
             logout()
+            finishAffinity()
+            val intent = Intent(this@MainActivity, StartActivity::class.java)
+            startActivity(intent)
+            bleController!!.disconnect()
         } else {
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
             startActivity(intent)

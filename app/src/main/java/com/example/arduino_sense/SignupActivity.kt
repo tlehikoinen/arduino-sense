@@ -1,5 +1,6 @@
 package com.example.arduino_sense
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -8,6 +9,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import okhttp3.ResponseBody
 
 class SignupActivity : AppCompatActivity() {
@@ -45,6 +47,8 @@ class SignupActivity : AppCompatActivity() {
         userService.createUser(reqUser, object : UserService.SignupCallback {
             override fun onSuccess(response: String) {
                 Log.d("signup", "success ${response}")
+                toast("SignUp success, you can login now")
+
                 onBackPressed()
             }
 
@@ -53,6 +57,9 @@ class SignupActivity : AppCompatActivity() {
                 set_res_text_delay(errorMessage, 2000)
             }
         })
+    }
+    private fun toast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show()
     }
 
     private fun set_res_text_delay(text: String, delayMs: Long) {
