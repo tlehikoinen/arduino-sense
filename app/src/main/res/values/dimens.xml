@@ -2,4 +2,5 @@
 <resources>
     <dimen name="Layout_margin1">5dp</dimen>
     <dimen name="layout_padding1">5dp</dimen>
+    <dimen name="big_text" />
 </resources>

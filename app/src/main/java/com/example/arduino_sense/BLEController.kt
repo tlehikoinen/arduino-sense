@@ -266,13 +266,13 @@ class BLEController private constructor(ctx: Context) {
                         data.setTemperature(characteristic.value[0].toString().toInt())
                     }
                     if(characteristic == btGattCharMode){
-                        data.setMode(if (characteristic.value[0].toString().toInt() == 0) Modes.AUTO else Modes.USER)
+                        data.setMode(if (characteristic.value[0].toString().toInt() == 0) FanModes.AUTO else FanModes.USER)
                     }
                     if (characteristic == btGattCharHumidity) {
                         data.setHumidity(characteristic.value[0].toString().toInt())
                     }
                     if (characteristic == btGattCharSpeed) {
-                        if (data.getMode() == Modes.USER) {
+                        if (data.getMode() == FanModes.USER) {
                             data.setSpeedUser(characteristic.value[0].toString().toInt())
                         } else {
                             data.setSpeedAuto(characteristic.value[0].toString().toInt())
