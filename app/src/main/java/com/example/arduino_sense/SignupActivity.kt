@@ -1,5 +1,6 @@
 package com.example.arduino_sense
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
@@ -45,7 +46,10 @@ class SignupActivity : AppCompatActivity() {
         userService.createUser(reqUser, object : UserService.SignupCallback {
             override fun onSuccess(response: String) {
                 Log.d("signup", "success ${response}")
-                onBackPressed()
+                //onBackPressed()
+                finishAffinity()
+                val intent = Intent(this@SignupActivity, MainActivity::class.java)
+                startActivity(intent)
             }
 
             override fun onFailure(errorMessage: String) {

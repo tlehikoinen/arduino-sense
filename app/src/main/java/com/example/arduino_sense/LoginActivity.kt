@@ -1,6 +1,7 @@
 package com.example.arduino_sense
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.os.Handler
@@ -60,7 +61,10 @@ class LoginActivity : AppCompatActivity() {
                 saveToken(token)
                 data.setUsername(reqUser.username)
                 data.setToken(token)
-                onBackPressed()
+                //onBackPressed()
+                finishAffinity()
+                val intent = Intent(this@LoginActivity, MainActivity::class.java)
+                startActivity(intent)
             }
 
             override fun onFailure() {
