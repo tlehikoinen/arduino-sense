@@ -9,6 +9,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import okhttp3.ResponseBody
 
 class SignupActivity : AppCompatActivity() {
@@ -46,10 +47,9 @@ class SignupActivity : AppCompatActivity() {
         userService.createUser(reqUser, object : UserService.SignupCallback {
             override fun onSuccess(response: String) {
                 Log.d("signup", "success ${response}")
-                //onBackPressed()
-                finishAffinity()
-                val intent = Intent(this@SignupActivity, MainActivity::class.java)
-                startActivity(intent)
+                toast("SignUp success, you can login now")
+
+                onBackPressed()
             }
 
             override fun onFailure(errorMessage: String) {
@@ -57,6 +57,9 @@ class SignupActivity : AppCompatActivity() {
                 set_res_text_delay(errorMessage, 2000)
             }
         })
+    }
+    private fun toast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show()
     }
 
     private fun set_res_text_delay(text: String, delayMs: Long) {

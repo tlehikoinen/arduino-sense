@@ -40,11 +40,18 @@ class StartActivity : AppCompatActivity() {
     private fun initOpenSignup() {
         openSignup = findViewById(R.id.btn_open_signup)
         openSignup.setOnClickListener {
+            logout()
             val intent = Intent(this@StartActivity, SignupActivity::class.java)
             startActivity(intent)
         }
     }
-
+    private fun logout() {
+        data.setToken("")
+        val edit = pref.edit()
+        edit.putString("token", "")
+        edit.commit()
+        loginOrLogoutText()
+    }
     private fun initOpenLogin() {
         openLogin = findViewById(R.id.btn_open_login)
         openLogin.setOnClickListener {
