@@ -91,7 +91,18 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private fun initOpenLogin() {
         openLogin = findViewById(R.id.btn_open_login)
         openLogin.setOnClickListener {
-            loginOrLogout()
+            val builder = AlertDialog.Builder(this)
+            builder.setMessage("Do you want to log out?")
+                .setCancelable(false)
+                .setPositiveButton("Yes") {
+                        _: DialogInterface?, _: Int ->  loginOrLogout()
+                }
+                .setNegativeButton("No") {
+                        dialog: DialogInterface, _: Int -> dialog.cancel()
+                }
+            val alert = builder.create()
+            alert.show()
+
         }
         loginOrLogoutText()
     }
@@ -99,6 +110,10 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private fun loginOrLogout() {
         if (data.getToken().startsWith("Bearer")) {
             logout()
+            finishAffinity()
+            val intent = Intent(this@MainActivity, StartActivity::class.java)
+            startActivity(intent)
+            bleController!!.disconnect()
         } else {
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
             startActivity(intent)

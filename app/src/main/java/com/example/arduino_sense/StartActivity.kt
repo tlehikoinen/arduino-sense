@@ -1,11 +1,14 @@
 package com.example.arduino_sense
 
 import android.content.Context
+import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Button
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import kotlin.system.exitProcess
 
 class StartActivity : AppCompatActivity() {
     private lateinit var openLogin: Button
@@ -20,7 +23,19 @@ class StartActivity : AppCompatActivity() {
         initOpenLogin()
         initOpenSignup()
     }
-
+    override fun onBackPressed(){
+        val builder = AlertDialog.Builder(this)
+        builder.setMessage("Do you want to close the app?")
+            .setCancelable(false)
+            .setPositiveButton("Yes") {
+                    _: DialogInterface?, _: Int ->  exitProcess(0)
+            }
+            .setNegativeButton("No") {
+                    dialog: DialogInterface, _: Int -> dialog.cancel()
+            }
+        val alert = builder.create()
+        alert.show()
+    }
 
     private fun initOpenSignup() {
         openSignup = findViewById(R.id.btn_open_signup)
