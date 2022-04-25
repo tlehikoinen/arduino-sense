@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">arduino_sense</string>
+    <string name="app_name">Arduino Sense</string>
     <string name="text_example">this is an example</string>
     <string name="start_button_text">Start</string>
     <string name="auto_button_text">Auto</string>
@@ -10,4 +10,5 @@
     <string name="disconnect">Disconnect</string>
     <string name="controlroom">ControlRoom</string>
     <string name="log">Log</string>
+    <string name="FanSpeed">Fan Speed</string>
 </resources>

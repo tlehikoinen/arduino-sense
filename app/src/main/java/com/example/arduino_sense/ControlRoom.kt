@@ -2,8 +2,6 @@ package com.example.arduino_sense
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.CountDownTimer
-import android.os.Handler
 import android.util.Log
 import android.view.View
 import android.widget.*
@@ -12,6 +10,7 @@ import androidx.databinding.DataBindingUtil
 import com.example.arduino_sense.databinding.ControlRoomLayoutBinding
 import kotlinx.coroutines.*
 import java.util.*
+
 
 /* Note about seekbar:
 Seekbar does not have xml property for being greyed out.
@@ -36,13 +35,30 @@ class ControlRoom: AppCompatActivity() {
         binding = DataBindingUtil.setContentView(this, R.layout.control_room_layout)
         binding.datas = data
         binding.autoButton.setOnClickListener { toggleMode() }
-        binding.btnGetTemp.setOnClickListener { getTemp() }
-        binding.offButton.setOnClickListener { turnFanOff() }
-        binding.btnDisconnect.setOnClickListener { disconnectBle() }
         binding.speedBar.setOnSeekBarChangeListener(speedBarListener())
         binding.speedBar.setOnTouchListener(speedBarState())    // Note about seekbar
-        binding.imgBtnLed.setOnClickListener { toggleLed() }
         binding.btnOpenTempData.setOnClickListener{ openData() }
+
+        binding.switchLed.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener() { buttonView, isChecked ->
+            if (isChecked) {
+                Log.d("tag", "is checked")
+                data.setLedMode(LedMode.ON)
+            } else {
+                Log.d("tag", "is not checked")
+                data.setLedMode(LedMode.OFF)
+            }
+            bleController!!.sendLEDData(data.getLedMode().to_arduino)
+        })
+
+        binding.offButton.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener { buttonView, isChecked ->
+            if (!isChecked) {
+                turnFanOff()
+            } else {
+                if (data.getSpeed() == 0 && data.getMode() == FanModes.USER) {
+                    data.setIsFanOfEnabled(false)
+                }
+            }
+        })
         initMode()
     }
 
@@ -54,7 +70,10 @@ class ControlRoom: AppCompatActivity() {
         super.onResume()
         job = startRepeatingJob(300000) // 5 minutes
     }
-
+    override fun onSupportNavigateUp(): Boolean {
+        onBackPressed()
+        return true
+    }
 
     // Save data to server every n ms
     private fun startRepeatingJob(timeInterval: Long): Job {
@@ -89,14 +108,13 @@ class ControlRoom: AppCompatActivity() {
         ByteArray (size) {i -> (data.toLong() shr (i*8)).toByte()}
 
     private fun initMode() {
-        data.setMode(if (littleEndianConversion(bleController!!.getMode()) == 0) Modes.AUTO else Modes.USER)
+        data.setMode(if (littleEndianConversion(bleController!!.getMode()) == 0) FanModes.AUTO else FanModes.USER)
         bleController!!.readSpeed()
         Log.d("REAd", data.getMode().toString())
         setSpeedBarVisibility()
     }
 
     private fun speedBarListener(): SeekBar.OnSeekBarChangeListener {
-
         return object :
             SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(seek: SeekBar,
@@ -114,7 +132,7 @@ class ControlRoom: AppCompatActivity() {
     }
     fun speedBarState(): View.OnTouchListener {
         // Disable changes on seekbar by in auto mode
-        return View.OnTouchListener { p0, p1 -> data.getMode() == Modes.AUTO }
+        return View.OnTouchListener { p0, p1 -> data.getMode() == FanModes.AUTO }
     }
 
     private fun changeFanSpeed(speed: Int) {
@@ -133,21 +151,17 @@ class ControlRoom: AppCompatActivity() {
         }
     }
 
-    private fun toggleLed() {
-        data.toggleLed()
-        bleController!!.sendLEDData(data.getLedMode().to_arduino)
-    }
-
     private fun setSpeedBarVisibility() {
-        binding.speedBar.isEnabled = data.getMode() == Modes.USER
+        binding.speedBar.isEnabled = data.getMode() == FanModes.USER
     }
 
     private fun turnFanOff() {
-        data.setMode(Modes.USER)
+        data.setMode(FanModes.USER)
         data.setSpeedUser(0)
         bleController!!.sendMode(data.getMode().to_arduino)
         bleController!!.sendSpeed(byteArrayOf(0))
         setSpeedBarVisibility()
+        data.setIsFanOfEnabled(false)
     }
 
     private fun toggleMode() {
@@ -156,17 +170,7 @@ class ControlRoom: AppCompatActivity() {
             data.toggleMode()
             bleController!!.sendMode(data.getMode().to_arduino)
             bleController!!.sendSpeed(numberToByteArray(data.getSpeed()))
-            //binding.speedBar.isEnabled = false
             setSpeedBarVisibility()
-
-        } catch (e: Exception){
-            toast("try again $e")
-        }
-    }
-
-    private fun getTemp() {
-        try {
-            bleController!!.readTemp()
         } catch (e: Exception){
             toast("try again $e")
         }
