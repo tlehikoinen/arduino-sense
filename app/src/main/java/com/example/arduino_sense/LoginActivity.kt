@@ -10,6 +10,7 @@ import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NavUtils
 import com.google.gson.Gson
@@ -63,9 +64,14 @@ class LoginActivity : AppCompatActivity() {
                 saveUser(loggedUser)
                 data.setUsername(reqUser.username)
                 data.setToken("Bearer ".plus(token))
+                onBackPressed()
+                toast("Logged in as: ${reqUser.username}")
+                /*
                 finishAffinity()
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 startActivity(intent)
+
+                 */
             }
 
             override fun onFailure() {
@@ -74,7 +80,9 @@ class LoginActivity : AppCompatActivity() {
             }
         })
     }
-
+    private fun toast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+    }
     private fun set_res_text_delay(text: String, delayMs: Long) {
         text_response.setText(text)
         Handler(Looper.getMainLooper()).postDelayed(
