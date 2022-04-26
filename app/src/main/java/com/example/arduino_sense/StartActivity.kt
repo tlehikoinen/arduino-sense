@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.gson.Gson
@@ -23,6 +24,13 @@ class StartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         pref = this.getSharedPreferences("token", Context.MODE_PRIVATE)
         setContentView(R.layout.start_activity)
+        readUser()
+        initOpenLogin()
+        initOpenSignup()
+    }
+    override fun onResume() {
+        super.onResume()
+        pref = this.getSharedPreferences("token", Context.MODE_PRIVATE)
         readUser()
         initOpenLogin()
         initOpenSignup()
@@ -44,15 +52,18 @@ class StartActivity : AppCompatActivity() {
     private fun initOpenSignup() {
         openSignup = findViewById(R.id.btn_open_signup)
         openSignup.setOnClickListener {
+            Toast.makeText(this, "Logged out ${data.getUsername()}", Toast.LENGTH_SHORT).show()
             logout()
             val intent = Intent(this@StartActivity, SignupActivity::class.java)
             startActivity(intent)
         }
     }
     private fun logout() {
+        data.setUsername("")
         data.setToken("")
         val edit = pref.edit()
-        edit.putString("token", "")
+        edit.remove("user")
+        //edit.putString("token", "")
         edit.commit()
         loginOrLogoutText()
     }

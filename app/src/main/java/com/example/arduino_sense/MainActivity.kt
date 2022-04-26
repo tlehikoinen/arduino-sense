@@ -77,7 +77,15 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
 //
 //    }
 
+
     override fun onBackPressed(){
+        if(!disconnectButton.isEnabled){
+        super.onBackPressed()
+        }
+        else{
+        toast("Please disconnect before going back!!")
+        }
+    /*
         val builder = AlertDialog.Builder(this)
         builder.setMessage("Go back to start screen?")
             .setCancelable(false)
@@ -89,6 +97,10 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
             }
         val alert = builder.create()
         alert.show()
+
+
+    }
+*/
     }
 
     private fun readToken() {
@@ -109,6 +121,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private fun initOpenLogin() {
         openLogin = findViewById(R.id.btn_open_login)
         openLogin.setOnClickListener {
+            /*
             Log.d("tag22", "initopenlogin")
             val builder = AlertDialog.Builder(this)
             builder.setMessage("Do you want to log out?")
@@ -121,27 +134,31 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
                 }
             val alert = builder.create()
             alert.show()
-
+             */
+            loginOrLogout()
         }
-        //loginOrLogoutText()
+        loginOrLogoutText()
     }
 
     private fun loginOrLogout() {
         if (data.getToken().startsWith("Bearer")) {
             logout()
+            /*
             finishAffinity()
             val intent = Intent(this@MainActivity, StartActivity::class.java)
             startActivity(intent)
             bleController!!.disconnect()
+
+             */
         } else {
             val intent = Intent(this@MainActivity, LoginActivity::class.java)
             startActivity(intent)
         }
     }
 
-//    private fun loginOrLogoutText() {
-//        openLogin.setText(if (data.getToken().startsWith("Bearer ")) "Logout" else "Login")
-//    }
+  private fun loginOrLogoutText() {
+     openLogin.setText(if (data.getToken().startsWith("Bearer ")) "Logout" else "Login")
+  }
 
     private fun logout() {
         data.setUsername("")
@@ -150,11 +167,14 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         edit.remove("user")
         //edit.putString("token", "")
         edit.commit()
+        /*
         finishAffinity()
         val intent = Intent(this@MainActivity, StartActivity::class.java)
         startActivity(intent)
-        bleController!!.disconnect()
-        //loginOrLogoutText()
+
+         */
+        //bleController!!.disconnect()
+        loginOrLogoutText()
     }
 
     private fun initConnectButton() {
@@ -281,7 +301,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
 
         if (data.getToken().startsWith("Bearer ")) {    // User is now logged in
             //data.fetchData()
-            //loginOrLogoutText()
+            loginOrLogoutText()
         }
     }
 
