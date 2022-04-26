@@ -55,33 +55,33 @@
 
                     <LinearLayout
                         android:id="@+id/linearLayout2"
-                        android:layout_width="0dp"
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="horizontal"
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent">
 
+
                         <TextView
                             android:id="@+id/text_humidity"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginLeft="32dp"
+                            android:layout_height="match_parent"
                             android:layout_weight="1"
+                            android:gravity="center"
                             android:text="@{datas.temperature+' '+'°'+'C'}"
                             android:textColor="@color/teal_700"
                             android:textSize="96sp" />
 
-
                         <TextView
                             android:id="@+id/text_temperature"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginLeft="20dp"
-                            android:layout_marginRight="20dp"
                             android:layout_weight="1"
-                            android:text="@{datas.humidity+'%'}"
+                            android:gravity="center"
+                            android:text="@{datas.humidity+' '+' '+'%'}"
                             android:textColor="@color/teal_700"
                             android:textSize="96sp" />
 

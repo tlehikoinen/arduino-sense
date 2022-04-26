@@ -48,7 +48,6 @@ class SignupActivity : AppCompatActivity() {
             override fun onSuccess(response: String) {
                 Log.d("signup", "success ${response}")
                 toast("SignUp success, you can login now")
-
                 onBackPressed()
             }
 

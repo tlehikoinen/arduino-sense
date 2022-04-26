@@ -31,7 +31,7 @@ class ControlRoom: AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.control_room_layout)
         bleController = BLEController.getInstance(this)
-
+        job = startRepeatingJob(300000) // 300000 5 minutes
         binding = DataBindingUtil.setContentView(this, R.layout.control_room_layout)
         binding.datas = data
         binding.autoButton.setOnClickListener { toggleMode() }
@@ -41,10 +41,8 @@ class ControlRoom: AppCompatActivity() {
 
         binding.switchLed.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener() { buttonView, isChecked ->
             if (isChecked) {
-                Log.d("tag", "is checked")
                 data.setLedMode(LedMode.ON)
             } else {
-                Log.d("tag", "is not checked")
                 data.setLedMode(LedMode.OFF)
             }
             bleController!!.sendLEDData(data.getLedMode().to_arduino)
@@ -62,14 +60,12 @@ class ControlRoom: AppCompatActivity() {
         initMode()
     }
 
-    override fun onPause() {
-        super.onPause()
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d("tag", "control room onDestroy()")
         job.cancel()
     }
-    override fun onResume() {
-        super.onResume()
-        job = startRepeatingJob(300000) // 5 minutes
-    }
+
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
@@ -110,7 +106,6 @@ class ControlRoom: AppCompatActivity() {
     private fun initMode() {
         data.setMode(if (littleEndianConversion(bleController!!.getMode()) == 0) FanModes.AUTO else FanModes.USER)
         bleController!!.readSpeed()
-        Log.d("REAd", data.getMode().toString())
         setSpeedBarVisibility()
     }
 
@@ -140,16 +135,6 @@ class ControlRoom: AppCompatActivity() {
         bleController!!.sendSpeed(byteArrayOf(speed.toByte()))
 
     }
-    private fun switchLED(bleController: BLEController?, on: Boolean) {
-        val ledon = ByteArray(1)
-        val ledoff = ByteArray(1)
-        ledon[0] = 0x1
-        if (!on) {
-            bleController!!.sendLEDData(ledoff)
-        } else {
-            bleController!!.sendLEDData(ledon)
-        }
-    }
 
     private fun setSpeedBarVisibility() {
         binding.speedBar.isEnabled = data.getMode() == FanModes.USER
@@ -176,12 +161,12 @@ class ControlRoom: AppCompatActivity() {
         }
     }
 
-    private fun disconnectBle() {
-        toast("Disconnecting")
-        bleController!!.disconnect()
-        val intent = Intent(this@ControlRoom, MainActivity::class.java)
-        startActivity(intent)
-    }
+//    private fun disconnectBle() {
+//        toast("Disconnecting")
+//        bleController!!.disconnect()
+//        val intent = Intent(this@ControlRoom, MainActivity::class.java)
+//        startActivity(intent)
+//    }
     private fun toast(text: String) {
         Toast.makeText(this, text, Toast.LENGTH_LONG).show()
     }

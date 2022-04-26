@@ -12,6 +12,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.NavUtils
+import com.google.gson.Gson
 
 class LoginActivity : AppCompatActivity() {
 
@@ -45,9 +46,11 @@ class LoginActivity : AppCompatActivity() {
         text_response = findViewById(R.id.login_text_response)
     }
 
-    private fun saveToken(value: String) {
+    private fun saveUser(value: LoggedUser) {
         val edit = pref.edit()
-        edit.putString("token", "Bearer ".plus(value))
+        val gson = Gson()
+        val jsonUser: String = gson.toJson(value)
+        edit.putString("user", jsonUser)
         edit.commit()
     }
 
@@ -56,27 +59,20 @@ class LoginActivity : AppCompatActivity() {
         val reqUser = PostUserReq(text_username.text.toString(), text_password.text.toString())
         userService.loginUser(reqUser, object : UserService.LoginCallback {
             override fun onSuccess(token: String) {
-                Log.d("tag", "LOGIN SUCCESS")
-                Log.d("tag", "$token")
-                saveToken(token)
+                val loggedUser = LoggedUser(username=reqUser.username, token="Bearer ".plus(token))
+                saveUser(loggedUser)
                 data.setUsername(reqUser.username)
-                data.setToken(token)
-                //onBackPressed()
+                data.setToken("Bearer ".plus(token))
                 finishAffinity()
                 val intent = Intent(this@LoginActivity, MainActivity::class.java)
                 startActivity(intent)
             }
 
             override fun onFailure() {
-                text_response.setText("Login failed")
                 set_res_text_delay("Login failed", 2000)
-                Log.d("tag", "LOGIN FAILRUE")
+                Log.d("tag", "LOGIN FAILURE")
             }
-
         })
-        Log.d("tag", "AFTER LOGIN")
-        Log.d("tag", data.getToken())
-
     }
 
     private fun set_res_text_delay(text: String, delayMs: Long) {
