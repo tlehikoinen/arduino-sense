@@ -7,6 +7,11 @@ import android.util.Log
 import kotlinx.coroutines.launch
 
 
+data class LoggedUser (
+    var username: String,
+    var token: String
+)
+
 // Arduino mode => send 0 for auto, 1 for user controlled
 enum class FanModes {
     USER("Auto mode", Color.BLACK, byteArrayOf(1)),

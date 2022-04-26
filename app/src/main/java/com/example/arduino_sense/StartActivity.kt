@@ -5,10 +5,14 @@ import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.google.gson.Gson
 import kotlin.system.exitProcess
+
+var data = AppData()
 
 class StartActivity : AppCompatActivity() {
     private lateinit var openLogin: Button
@@ -19,7 +23,7 @@ class StartActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         pref = this.getSharedPreferences("token", Context.MODE_PRIVATE)
         setContentView(R.layout.start_activity)
-        readToken()
+        readUser()
         initOpenLogin()
         initOpenSignup()
     }
@@ -59,13 +63,17 @@ class StartActivity : AppCompatActivity() {
         }
         loginOrLogoutText()
     }
-    private fun readToken() {
-        val token = pref.getString("token", "DEFAULT").toString()
-        data.setToken(token)
+
+    private fun readUser() {
+        var gson = Gson()
+        val jsonUser = pref.getString("user", "{ 'username': '', 'token': ''}")
+        val loggedUser: LoggedUser = gson.fromJson(jsonUser, LoggedUser::class.java)
+        data.setUsername(loggedUser.username)
+        data.setToken(loggedUser.token)
     }
     private fun loginOrConnect(){
         if (data.getToken().startsWith("Bearer")) {
-            finishAffinity()
+            //finishAffinity()
             val intent = Intent(this@StartActivity, MainActivity::class.java)
             startActivity(intent)
         }
