@@ -15,6 +15,18 @@
         android:orientation="vertical"
         android:padding="@dimen/layout_padding1">
 
+        <Button
+            android:id="@+id/backbtn"
+            android:layout_width="67dp"
+            android:layout_height="wrap_content"
+            android:backgroundTint="@color/trans"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
+            android:stateListAnimator="@null"
+            app:icon="?attr/actionModeCloseDrawable"
+            app:iconTint="@color/purple_500"
+            tools:visibility="visible" />
+
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"

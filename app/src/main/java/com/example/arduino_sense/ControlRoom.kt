@@ -38,6 +38,7 @@ class ControlRoom: AppCompatActivity() {
         binding.speedBar.setOnSeekBarChangeListener(speedBarListener())
         binding.speedBar.setOnTouchListener(speedBarState())    // Note about seekbar
         binding.btnOpenTempData.setOnClickListener{ openData() }
+        binding.backbtn.setOnClickListener { goback() }
 
         binding.switchLed.setOnCheckedChangeListener(CompoundButton.OnCheckedChangeListener() { buttonView, isChecked ->
             if (isChecked) {
@@ -66,10 +67,16 @@ class ControlRoom: AppCompatActivity() {
         job.cancel()
     }
 
+    private fun goback(){
+        onBackPressed()
+    }
+/*
     override fun onSupportNavigateUp(): Boolean {
         onBackPressed()
         return true
     }
+
+ */
 
     // Save data to server every n ms
     private fun startRepeatingJob(timeInterval: Long): Job {

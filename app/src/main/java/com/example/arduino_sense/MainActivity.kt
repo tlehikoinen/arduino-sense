@@ -35,6 +35,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
     private lateinit var disconnectButton: Button
     private lateinit var openControlRoom: Button
     private lateinit var openLogin: Button
+    private lateinit var backbtn:Button
     //private lateinit var openSignup: Button
     private var bleController: BLEController? = null
     private lateinit var deviceAddress: String
@@ -56,6 +57,7 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
         initDisconnectButton()
         initControlRoomButton()
         initOpenLogin()
+        initbackbtn()
         //initOpenSignup()
         statusCheck()
         checkBLESupport()
@@ -101,6 +103,10 @@ class MainActivity : AppCompatActivity(), BLEControllerListener {
 
     }
 */
+    }
+    private fun initbackbtn(){
+        backbtn=findViewById(R.id.buttonback)
+        backbtn.setOnClickListener {onBackPressed()  }
     }
 
     private fun readToken() {
