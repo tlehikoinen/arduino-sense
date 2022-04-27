@@ -9,7 +9,9 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.drawable.ColorDrawable
+import android.location.LocationManager
 import android.os.Bundle
+import android.provider.Settings
 import android.util.Log
 import android.widget.Button
 import android.widget.TextView
@@ -37,6 +39,9 @@ class StartActivity : AppCompatActivity() {
         readUser()
         initOpenLogin()
         initOpenSignup()
+        checkBLESupport()
+        statusCheck()
+        checkPermissions()
     }
     override fun onStart() {
         super.onStart()
@@ -64,6 +69,49 @@ class StartActivity : AppCompatActivity() {
             .setCancelable(false)
             .setPositiveButton("Yes") {
                     _: DialogInterface?, _: Int ->  exitProcess(0)
+            }
+            .setNegativeButton("No") {
+                    dialog: DialogInterface, _: Int -> dialog.cancel()
+            }
+        val alert = builder.create()
+        alert.show()
+    }
+    private fun toast(text: String) {
+        Toast.makeText(this, text, Toast.LENGTH_LONG).show()
+    }
+    private fun checkBLESupport() {
+        // Check if BLE is supported on the device.
+        if (!packageManager.hasSystemFeature(PackageManager.FEATURE_BLUETOOTH_LE)) {
+            toast("BLE not supported!")
+            finish()
+        }
+    }
+    private fun checkPermissions() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                42
+            )
+        }
+    }
+
+    private fun statusCheck() {
+        val manager = getSystemService(LOCATION_SERVICE) as LocationManager
+        if (!manager.isProviderEnabled(LocationManager.GPS_PROVIDER)) {
+            buildAlertMessageNoGps()
+        }
+    }
+
+    private fun buildAlertMessageNoGps() {
+        val builder = AlertDialog.Builder(this)
+        builder.setMessage("Your GPS seems to be disabled, do you want to enable it?")
+            .setCancelable(false)
+            .setPositiveButton("Yes") {
+                    _: DialogInterface?, _: Int -> startActivity(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            )
             }
             .setNegativeButton("No") {
                     dialog: DialogInterface, _: Int -> dialog.cancel()
